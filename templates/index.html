@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="../static/js/qwebchannel.js"></script>
+    <title>QWebChannel测试</title>
+    <script>
+    	//初始化代码，固定格式
+        window.onload = function () {
+            new QWebChannel(qt.webChannelTransport, function (channel) {
+                window.py = channel.objects.py;
+            });
+        }
+    </script>
+</head>
+<body>
+<div id="sysTime" style="padding:5px;border: 2px solid green"></div>
+<div style="margin-top: 10px;padding:5px;border: 2px solid green">
+    <input id="message" name="message"/>
+    <button onclick="sendMessage();">发送消息</button>
+</div>
+<script>
+    function sendMessage() {
+        message = document.getElementById('message').value;
+        //调用python的hello方法
+        py.hello(message, function(res){
+            alert(res);
+        });
+    }
+	//给python调用的显示时间的测试方法
+    function sysTime(msg) {
+        document.getElementById('sysTime').innerHTML=msg;
+    }
+
+
+</script>
+</body>
+</html>
+

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>地图展示</title>
+    <script type="text/javascript" src="http://cnpolaris.top/qwebchannel.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <style>
+    body,
+    html,
+    #container {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        font-family: "微软雅黑";
+    }
+    </style>
+    <script src="http://api.map.baidu.com/api?type=webgl&v=2.0&ak=98edo3vSG3UhY6lLnN9vr3l3wZPDK1Cj"></script>
+    <script src="http://mapv.baidu.com/build/mapv.min.js"></script>
+    <script>
+    	//初始化代码，固定格式
+        window.onload = function () {
+            new QWebChannel(qt.webChannelTransport, function (channel) {
+                window.py = channel.objects.py;
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="container"></div>
+</body>
+</html>
+<script>
+/*
+* 地图相关
+* TODO：由于百度地图js资源是通过云端引入的，因此出现了资源引入异步的问题，所以在QWebEngineView中采用了setHtml的方式
+*  解决了百度地图js资源引入的问题，但是带来了一个新的问题，即setHtml时对资源引入不能使用相对路径，只能使用绝对路径，
+* 但是浏览器会报安全性错误，无法直接使用本地的资源，所以把一些资源全部通过云端的方式进行引入，软件必须联网使用才可以
+*
+* */
+var map = new BMapGL.Map('container'); // 创建Map实例
+map.centerAndZoom(new BMapGL.Point(119.373175, 32.119817), 18); // 初始化地图,设置中心点坐标和地图级别
+map.enableScrollWheelZoom(true); // 开启鼠标滚轮缩放
+map.setMapType(BMAP_NORMAL_MAP);
+var scaleCtrl = new BMapGL.ScaleControl();  // 添加比例尺控件
+map.addControl(scaleCtrl);
+var zoomCtrl = new BMapGL.ZoomControl();  // 添加缩放控件
+map.addControl(zoomCtrl);
+// 添加小车
+var myIcon = new BMapGL.Icon("https://s2.loli.net/2022/12/03/19lmJ3PhQiA8xVR.png",new BMapGL.Size(52, 26),{imageOffset: new BMapGL.Size(0, 0)});
+var point = new BMapGL.Point(119.373175, 32.119817);
+var marker = new BMapGL.Marker(point, {icon: myIcon});        // 创建标注
+map.addOverlay(marker);
+
+//右键菜单
+//右键触发时临时保存触发点的坐标
+map.addEventListener("rightclick", function (e) {
+    tempHome = [e.latlng.lng, e.latlng.lat];
+});
+var menu = new BMapGL.ContextMenu();
+var txtMenuItem = [
+    {
+        text: '设置家在此',
+        callback: function (){
+            setHomePoint();
+        }
+    },
+    {
+        text: '清除全部航迹',
+        callback: function (){
+            clearAllPath();
+        }
+    }
+]
+for(var i = 0; i < txtMenuItem.length; i++){
+    menu.addItem(new BMapGL.MenuItem(               // 定义菜单项实例
+        txtMenuItem[i].text,                        // 传入菜单项的显示文本
+        txtMenuItem[i].callback,                    // 传入菜单项的回调函数
+        {
+            width: 200,                             // 指定菜单项的宽度
+            id: 'menu' + i                          // 指定菜单项dom的id
+        }
+    ));
+}
+map.addContextMenu(menu);
+
+//home point
+var tempHome = [];
+var home = new BMapGL.Point(119.373175, 32.119817);
+var homeIcon = new BMapGL.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png", new BMapGL.Size(23, 35));
+var homeMarker = new BMapGL.Marker(home, {icon: homeIcon});
+homeMarker.setLabel('H');
+homeMarker.setTitle('家');
+map.addOverlay(homeMarker);
+/*
+* 系统自定义内容
+* */
+var coords = [];
+var polylineArray = [];
+var polylineJson = {};
+
+function genCoordsLine(id, data) {// 接收航迹数据传输 TODO: 根据id不同显示不同航迹， 不同标记， 航向表示
+    if(polylineArray.length !== 0){
+        for(var i = 0;i < polylineArray.length; i++){
+            if(polylineArray[i].id === id){//此条路径存在
+                var pathArray = polylineArray[i].pathArray;
+                pathArray.push(new BMapGL.Point(data.lng, data.lat)); // 更新数据
+                var allOverlay = map.getOverlays(); //获取地图上的覆盖物
+
+                for (let j=0; j<allOverlay.length; j++){
+                    //判断是否为polyline
+                    if(allOverlay[j].toString() === "Polyline"){
+                        if(allOverlay[j].id === id){
+                            allOverlay[j].setPath(pathArray);
+                            break;
+                        } else { //数组中存在，但是地图上没有
+                            if(j === allOverlay.length - 1){
+                                var polylineTemp = new BMapGL.Polyline(pathArray,{strokeColor:"blue", strokeWeight:2, strokeOpacity:0.5});
+                                polylineTemp.id = id; // 为路线赋值唯一id
+                                map.addOverlay(polylineTemp); // 添加折线到地图
+                            }
+                        }
+                    }
+                }
+            } else {//不存在
+                if (i === polylineArray.length - 1){
+                    var pathArray = [];
+                    pathArray.push(new BMapGL.Point(data.lng, data.lat));
+                    var polylineTemp = new BMapGL.Polyline(pathArray,{strokeColor:"blue", strokeWeight:2, strokeOpacity:0.5});
+                    polylineTemp.id = id;
+                    map.addOverlay(polylineTemp);
+                    var polylineJson = {};
+                    polylineJson['id'] = id;
+                    polylineJson['pathArray'] = pathArray;
+                    polylineArray.push(polylineJson);
+                    break;
+                }
+            }
+        }
+    } else {
+        var pathArray = [];
+        pathArray.push(new BMapGL.Point(data.lng, data.lat));
+        var polylineTemp = new BMapGL.Polyline(pathArray,{strokeColor:"blue", strokeWeight:2, strokeOpacity:0.5});
+        polylineTemp.id = id;
+        map.addOverlay(polylineTemp);
+        var polylineJson = {};
+        polylineJson['id'] = id;
+        polylineJson['pathArray'] = pathArray;
+        polylineArray.push(polylineJson);
+    }
+    marker.setPosition(new BMapGL.Point(data.lng, data.lat));
+}
+
+function setHomePoint(){
+    home.lng = tempHome[0];
+    home.lat = tempHome[1];
+    homeMarker.setPosition(home);
+    py.update_home_point(tempHome[0] + ',' +tempHome[1]);
+}
+
+function clearAllPath(){
+    console.log("清除全部航迹");
+    if(polylineArray.length !== 0){
+        for(let i =0; i<polylineArray.length; i++){
+            if(polylineArray[i].id !== undefined){
+                polylineArray[i].pathArray = []
+                var allOverlay = map.getOverlays();
+                for (let j = 0;j<allOverlay.length;j++){
+                    if(allOverlay[j].toString() === "Polyline"){
+                        if(allOverlay[j].id === polylineArray[i].id){
+                            allOverlay[j].setPath([]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+</script>

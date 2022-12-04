@@ -47,6 +47,8 @@ class Window(QMainWindow):
         参数
         """
         self.home = []
+        self.startPoint = []
+        self.endPoint = []
         """
         控件初始化
         """
@@ -120,6 +122,20 @@ class Window(QMainWindow):
         x, y = home.split(',')
         self.home.append(float(x))
         self.home.append(float(y))
+
+    @Slot(str, result=int)
+    def set_start_point(self, point):
+        x, y = point.split(',')
+        self.startPoint.append(float(x))
+        self.startPoint.append(float(y))
+        return 1
+
+    @Slot(str, result=int)
+    def set_end_point(self, point):
+        x, y = point.split(',')
+        self.endPoint.append(float(x))
+        self.endPoint.append(float(y))
+        return 1
 
 
 class UDP_Thread(QtCore.QThread):

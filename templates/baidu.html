@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>地图展示</title>
-    <script type="text/javascript" src="http://cnpolaris.top/qwebchannel.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/CNPolaris/usv_ctrl/static/js/qwebchannel.js"></script>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
@@ -18,7 +18,7 @@
         font-family: "微软雅黑";
     }
     </style>
-    <script src="http://api.map.baidu.com/api?type=webgl&v=2.0&ak=98edo3vSG3UhY6lLnN9vr3l3wZPDK1Cj"></script>
+    <script src="http://api.map.baidu.com/api?type=webgl&v=1.0&ak=98edo3vSG3UhY6lLnN9vr3l3wZPDK1Cj"></script>
     <script src="http://mapv.baidu.com/build/mapv.min.js"></script>
     <script>
     	//初始化代码，固定格式
@@ -44,7 +44,7 @@
 var map = new BMapGL.Map('container'); // 创建Map实例
 map.centerAndZoom(new BMapGL.Point(119.373175, 32.119817), 18); // 初始化地图,设置中心点坐标和地图级别
 map.enableScrollWheelZoom(true); // 开启鼠标滚轮缩放
-map.setMapType(BMAP_NORMAL_MAP);
+// map.setMapType(BMAP_SATELLITE_MAP); //TODO:卫星地图渲染有问题
 var scaleCtrl = new BMapGL.ScaleControl();  // 添加比例尺控件
 map.addControl(scaleCtrl);
 var zoomCtrl = new BMapGL.ZoomControl();  // 添加缩放控件
@@ -73,9 +73,21 @@ var txtMenuItem = [
         callback: function (){
             clearAllPath();
         }
+    },
+    {
+        text: '设置起点',
+        callback:function (){
+            setStartPoint();
+        }
+    },
+    {
+        text: '设置终点',
+        callback: function (){
+            setEndPoint();
+        }
     }
 ]
-for(var i = 0; i < txtMenuItem.length; i++){
+for(let i = 0; i < txtMenuItem.length; i++){
     menu.addItem(new BMapGL.MenuItem(               // 定义菜单项实例
         txtMenuItem[i].text,                        // 传入菜单项的显示文本
         txtMenuItem[i].callback,                    // 传入菜单项的回调函数
@@ -101,7 +113,8 @@ map.addOverlay(homeMarker);
 var coords = [];
 var polylineArray = [];
 var polylineJson = {};
-
+var startPoint = undefined;
+var endPoint = undefined;
 function genCoordsLine(id, data) {// 接收航迹数据传输 TODO: 根据id不同显示不同航迹， 不同标记， 航向表示
     if(polylineArray.length !== 0){
         for(var i = 0;i < polylineArray.length; i++){
@@ -179,5 +192,31 @@ function clearAllPath(){
             }
         }
     }
+}
+
+function setStartPoint(){ // 设置起点 并回传qt
+    startPoint = new BMapGL.Point(tempHome[0], tempHome[1]);
+    py.set_start_point(tempHome[0] + ',' + tempHome[1], function (res){
+        if(res === 1){
+            var startIcon = new BMapGL.Icon("https://raw.githubusercontent.com/CNPolaris/usv_ctrl/master/static/images/start.png",new BMapGL.Size(52, 26),{imageOffset: new BMapGL.Size(0, 0)});
+            var startMarker = new BMapGL.Marker(startPoint, {icon: startIcon});
+            map.addOverlay(startMarker);
+        } else {
+            alert("设置起点失败");
+        }
+    });
+}
+
+function setEndPoint() { // 设置终点 并回传qt
+    endPoint = new BMapGL.Point(tempHome[0], tempHome[1])
+    py.set_end_point(tempHome[0] + ',' + tempHome[1], function (res){
+        if(res === 1){
+            var endIcon = new BMapGL.Icon("https://raw.githubusercontent.com/CNPolaris/usv_ctrl/master/static/images/end.png",new BMapGL.Size(52, 26),{imageOffset: new BMapGL.Size(0, 0)});
+            var endMarker = new BMapGL.Marker(endPoint, {icon: endIcon});
+            map.addOverlay(endMarker);
+        } else {
+            alert("设置终点失败");
+        }
+    });
 }
 </script>

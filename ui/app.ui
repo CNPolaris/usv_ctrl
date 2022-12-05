@@ -164,9 +164,9 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>340</x>
       <y>60</y>
-      <width>361</width>
+      <width>411</width>
       <height>51</height>
      </rect>
     </property>
@@ -176,7 +176,7 @@
     <widget class="QLabel" name="label_4">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>70</x>
        <y>20</y>
        <width>21</width>
        <height>16</height>
@@ -194,7 +194,7 @@
     <widget class="QTextEdit" name="client_ip_text">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>90</x>
        <y>20</y>
        <width>111</width>
        <height>31</height>
@@ -204,7 +204,7 @@
     <widget class="QLabel" name="label_5">
      <property name="geometry">
       <rect>
-       <x>150</x>
+       <x>210</x>
        <y>20</y>
        <width>31</width>
        <height>16</height>
@@ -225,7 +225,7 @@
     <widget class="QTextEdit" name="client_port_text">
      <property name="geometry">
       <rect>
-       <x>180</x>
+       <x>240</x>
        <y>20</y>
        <width>81</width>
        <height>31</height>
@@ -235,7 +235,7 @@
     <widget class="QPushButton" name="add_client_btn">
      <property name="geometry">
       <rect>
-       <x>280</x>
+       <x>330</x>
        <y>20</y>
        <width>75</width>
        <height>31</height>
@@ -243,6 +243,16 @@
      </property>
      <property name="text">
       <string>连接终端</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="connect_types_comboBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>51</width>
+       <height>22</height>
+      </rect>
      </property>
     </widget>
    </widget>
@@ -301,7 +311,7 @@
    <widget class="QComboBox" name="mapType_comboBox">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>220</x>
       <y>80</y>
       <width>91</width>
       <height>22</height>

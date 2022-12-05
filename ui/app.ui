@@ -76,7 +76,7 @@
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>20</y>
+       <y>14</y>
        <width>111</width>
        <height>31</height>
       </rect>
@@ -86,7 +86,7 @@
      <property name="geometry">
       <rect>
        <x>180</x>
-       <y>20</y>
+       <y>14</y>
        <width>71</width>
        <height>31</height>
       </rect>
@@ -96,7 +96,7 @@
      <property name="geometry">
       <rect>
        <x>260</x>
-       <y>20</y>
+       <y>14</y>
        <width>81</width>
        <height>31</height>
       </rect>
@@ -109,7 +109,7 @@
      <property name="geometry">
       <rect>
        <x>350</x>
-       <y>20</y>
+       <y>14</y>
        <width>81</width>
        <height>31</height>
       </rect>
@@ -173,7 +173,7 @@
     <property name="title">
      <string>连接终端</string>
     </property>
-    <widget class="QLabel" name="label_4">
+    <widget class="QLabel" name="ip_label">
      <property name="geometry">
       <rect>
        <x>70</x>
@@ -195,13 +195,13 @@
      <property name="geometry">
       <rect>
        <x>90</x>
-       <y>20</y>
+       <y>15</y>
        <width>111</width>
        <height>31</height>
       </rect>
      </property>
     </widget>
-    <widget class="QLabel" name="label_5">
+    <widget class="QLabel" name="port_label">
      <property name="geometry">
       <rect>
        <x>210</x>
@@ -226,7 +226,7 @@
      <property name="geometry">
       <rect>
        <x>240</x>
-       <y>20</y>
+       <y>14</y>
        <width>81</width>
        <height>31</height>
       </rect>
@@ -236,7 +236,7 @@
      <property name="geometry">
       <rect>
        <x>330</x>
-       <y>20</y>
+       <y>14</y>
        <width>75</width>
        <height>31</height>
       </rect>
@@ -249,9 +249,22 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
+       <y>19</y>
        <width>51</width>
        <height>22</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="client_serial_port">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>14</y>
+       <width>111</width>
+       <height>31</height>
       </rect>
      </property>
     </widget>
@@ -262,7 +275,7 @@
       <x>0</x>
       <y>120</y>
       <width>181</width>
-      <height>231</height>
+      <height>181</height>
      </rect>
     </property>
     <property name="title">
@@ -272,9 +285,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
-       <width>161</width>
-       <height>201</height>
+       <y>22</y>
+       <width>160</width>
+       <height>150</height>
       </rect>
      </property>
      <property name="sizeAdjustPolicy">
@@ -311,7 +324,7 @@
    <widget class="QComboBox" name="mapType_comboBox">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>240</x>
       <y>80</y>
       <width>91</width>
       <height>22</height>

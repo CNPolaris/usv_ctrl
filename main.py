@@ -57,6 +57,7 @@ class Window(QMainWindow):
         self.ui.over_btn.clicked.connect(self.on_over_btn_clicked)
         self.ui.add_client_btn.clicked.connect(self.on_add_client_btn_clicked)
         # ip and port
+        self.ui.client_serial_port.setVisible(False)
         self.ui.ip_text.setText('127.0.0.1')
         self.ui.port_text.setText('9999')
         self.ui.client_ip_text.setText('127.0.0.1')
@@ -71,9 +72,12 @@ class Window(QMainWindow):
         self.ui.client_listView.setModel(self.client_model)
         # the comboBox of map types
         self.map_types = ['百度地图', '高德地图', '腾讯地图', '天地图']
-        for i in self.map_types:
-            self.ui.mapType_comboBox.addItem(i)
+        self.ui.mapType_comboBox.addItems(self.map_types)
         self.ui.mapType_comboBox.currentIndexChanged[int].connect(self.on_map_types_comboBox_changed)
+        # the comboBox of client connect type
+        self.client_connect_types = ['UDP', 'TCP', 'COM']
+        self.ui.connect_types_comboBox.addItems(self.client_connect_types)
+        self.ui.connect_types_comboBox.currentIndexChanged[int].connect(self.on_client_connect_comboBox_changed)
 
     def init_baidu(self):
         path = os.getcwd().replace('\\', '/') + "/templates/baidu.html"
@@ -196,6 +200,19 @@ class Window(QMainWindow):
         # TODO实现地图类型切换
         print(i, self.map_types[i])
         
+    def on_client_connect_comboBox_changed(self, i):
+        if self.client_connect_types[i] == 'COM':
+            self.ui.client_serial_port.setVisible(True)
+            self.ui.ip_label.setVisible(False)
+            self.ui.client_ip_text.setVisible(False)
+            self.ui.port_label.setVisible(False)
+            self.ui.client_port_text.setVisible(False)
+        else:
+            self.ui.client_serial_port.setVisible(False)
+            self.ui.ip_label.setVisible(True)
+            self.ui.client_ip_text.setVisible(True)
+            self.ui.port_label.setVisible(True)
+            self.ui.client_port_text.setVisible(True)
 
 class UDP_Thread(QtCore.QThread):
     send_data = QtCore.Signal(tuple, str)

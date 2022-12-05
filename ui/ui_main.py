@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QFrame, QGroupBox,
-    QLabel, QListView, QMainWindow, QPushButton,
-    QSizePolicy, QTextEdit, QWidget)
+from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QFrame,
+    QGroupBox, QLabel, QListView, QMainWindow,
+    QPushButton, QSizePolicy, QTextEdit, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -102,6 +102,9 @@ class Ui_MainWindow(object):
         self.back_home_btn = QPushButton(self.groupBox_4)
         self.back_home_btn.setObjectName(u"back_home_btn")
         self.back_home_btn.setGeometry(QRect(10, 20, 75, 24))
+        self.mapType_comboBox = QComboBox(self.centralwidget)
+        self.mapType_comboBox.setObjectName(u"mapType_comboBox")
+        self.mapType_comboBox.setGeometry(QRect(280, 80, 91, 22))
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -124,5 +127,6 @@ class Ui_MainWindow(object):
         self.groupBox_3.setTitle(QCoreApplication.translate("MainWindow", u"\u8bbe\u5907\u6811", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("MainWindow", u"\u8def\u5f84\u89c4\u5212", None))
         self.back_home_btn.setText(QCoreApplication.translate("MainWindow", u"\u81ea\u52a8\u8fd4\u822a", None))
+        self.mapType_comboBox.setCurrentText("")
     # retranslateUi
 

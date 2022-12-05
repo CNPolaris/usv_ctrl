@@ -42,7 +42,7 @@ class Window(QMainWindow):
         self.udp_params.connect(self.udp.udp_params_update)
         self.clients.connect(self.udp.add_client)
         self.udp.send_data.connect(self.log_list_view)
-        self.udp.send_data.connect(self.send_coord_to_baidu)
+        self.udp.send_data.connect(self.send_coord_to_map)
         """
         参数
         """
@@ -69,6 +69,11 @@ class Window(QMainWindow):
         self.client_list = []
         self.client_model = QtCore.QStringListModel(self.client_list)
         self.ui.client_listView.setModel(self.client_model)
+        # the comboBox of map types
+        self.map_types = ['百度地图', '高德地图', '腾讯地图', '天地图']
+        for i in self.map_types:
+            self.ui.mapType_comboBox.addItem(i)
+        self.ui.mapType_comboBox.currentIndexChanged[int].connect(self.on_map_types_comboBox_changed)
 
     def init_baidu(self):
         path = os.getcwd().replace('\\', '/') + "/templates/baidu.html"
@@ -92,14 +97,14 @@ class Window(QMainWindow):
         self.update_client()
 
     def update_udp_params(self):
-        """
-        udp参数更新
-        :return:
+        """udp数据监听服务器参数更新
         """
         params = [self.ui.ip_text.toPlainText(), int(self.ui.port_text.toPlainText()), self.pause]
         self.udp_params.emit(params)
 
     def update_client(self):
+        """update_client 添加终端
+        """
         cli = (self.ui.client_ip_text.toPlainText(), int(self.ui.client_port_text.toPlainText()))
 
         if cli not in self.client_list:
@@ -114,17 +119,47 @@ class Window(QMainWindow):
         self.ui.logList.setModel(self.log_list_model)
         self.ui.logList.scrollToBottom()
 
-    def send_coord_to_baidu(self, addr, coord):
+    def send_coord_to_map(self, addr, coord):
+        """send_coord_to_map 向地图js传递数据
+
+        Parameters
+        ----------
+        addr : str
+            终端地址
+        coord : str
+            实时坐标
+        """
         self.page.runJavaScript(f'genCoordsLine(1,' + coord + ')')
 
     @Slot(str)
     def update_home_point(self, home):
+        """update_home_point 更新home点
+
+        Parameters
+        ----------
+        home : str
+            home点坐标 lng,lat
+        """
         x, y = home.split(',')
         self.home.append(float(x))
         self.home.append(float(y))
 
     @Slot(str, result=int)
     def set_start_point(self, point):
+        """set_start_point 设置路径起点
+
+        Parameters
+        ----------
+        point : str
+            经纬度坐标 lng,lat
+
+        Returns
+        -------
+        result: int
+            1: set start point successful
+            0: set start point unsuccessful
+
+        """
         x, y = point.split(',')
         self.startPoint.append(float(x))
         self.startPoint.append(float(y))
@@ -132,11 +167,35 @@ class Window(QMainWindow):
 
     @Slot(str, result=int)
     def set_end_point(self, point):
+        """set_end_point 设置路径终点
+
+        Parameters
+        ----------
+        point : str
+            经纬度坐标,以,分隔 lng,lat
+
+        Returns
+        -------
+        result: int
+            1: set end point successful
+            0: set end point unsuccessful
+        """
         x, y = point.split(',')
         self.endPoint.append(float(x))
         self.endPoint.append(float(y))
         return 1
 
+    def on_map_types_comboBox_changed(self, i):
+        """on_map_types_comboBox_changed 改变地图类型
+
+        Parameters
+        ----------
+        i : int
+            地图类型索引
+        """
+        # TODO实现地图类型切换
+        print(i, self.map_types[i])
+        
 
 class UDP_Thread(QtCore.QThread):
     send_data = QtCore.Signal(tuple, str)

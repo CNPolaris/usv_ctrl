@@ -298,6 +298,19 @@
      </property>
     </widget>
    </widget>
+   <widget class="QComboBox" name="mapType_comboBox">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>80</y>
+      <width>91</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="currentText">
+     <string/>
+    </property>
+   </widget>
   </widget>
  </widget>
  <customwidgets>

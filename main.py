@@ -9,6 +9,7 @@ Date：2022-11-29
 import os
 import socket
 import sys
+import uuid
 
 from PySide6 import QtCore
 from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
@@ -19,7 +20,7 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import *
 
 from ui.ui_app import Ui_MainWindow
-
+from ship_info import ShipInfo
 
 class Window(QMainWindow):
     # 主线程向udp线程传参
@@ -53,6 +54,7 @@ class Window(QMainWindow):
         self.com = QSerialPort()
         self.com_list = []
         self.current_client_type = 'UDP'
+        self.ship_info = []  # 船的有关信息
         """
         控件初始化
         """
@@ -75,7 +77,7 @@ class Window(QMainWindow):
         self.log_list_model = QtCore.QStringListModel(self.coords)
         self.ui.logList.setModel(self.log_list_model)
         # clients
-        self.client_list = []
+        self.client_list = []  # 保存UDP连接的终端ip和port
         self.client_model = QtCore.QStringListModel(self.client_list)
         self.ui.client_listView.setModel(self.client_model)
         # the comboBox of map types
@@ -137,8 +139,11 @@ class Window(QMainWindow):
         """update_client 添加终端
         """
         cli = (self.ui.client_ip_text.toPlainText(), int(self.ui.client_port_text.toPlainText()))
-
+        is_add = True
         if f'IP:{cli[0]},Port:{cli[1]}' not in self.client_list:
+            ship = ShipInfo(ip = cli[0], port=cli[1], connect_type='UDP')
+            self.ship_info.append(ship)
+            self.page.runJavaScript(f'addNewShip({ship.get_ship_info()})')
             self.client_list.append('IP:{0},Port:{1}'.format(cli[0], cli[1]))
             self.client_model.setStringList(self.client_list)
             self.ui.client_listView.setModel(self.client_model)
@@ -160,7 +165,10 @@ class Window(QMainWindow):
         coord : str
             实时坐标
         """
-        self.page.runJavaScript(f'genCoordsLine(1,' + coord + ')')
+        for item in self.ship_info:
+            if item.is_ship(addr):
+                info = item.get_ship_info()
+        self.page.runJavaScript(f'genCoordsLine({info}, {coord})')
 
     @Slot(str)
     def update_home_point(self, home):

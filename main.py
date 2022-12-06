@@ -87,7 +87,7 @@ class Window(QMainWindow):
         self.ui.connect_types_comboBox.addItems(self.client_connect_types)
         self.ui.connect_types_comboBox.currentIndexChanged[int].connect(self.on_client_connect_comboBox_changed)
         self.ui.client_serial_port.currentIndexChanged[int].connect(self.on_client_serial_port_changed)
-
+        
     def init_baidu(self):
         path = os.getcwd().replace('\\', '/') + "/templates/baidu.html"
         with open(path, encoding="UTF-8") as f:
@@ -98,6 +98,8 @@ class Window(QMainWindow):
         print("开始接收数据")
         self.ui.connect_btn.setEnabled(False)
         self.ui.over_btn.setEnabled(True)
+        self.ui.ip_text.setEnabled(False)
+        self.ui.port_text.setEnabled(False)
         self.pause = False
         self.update_udp_params()
         self.udp.start()
@@ -106,6 +108,10 @@ class Window(QMainWindow):
         print("终止接收数据")
         self.ui.connect_btn.setEnabled(True)
         self.ui.over_btn.setEnabled(False)
+        self.ui.ip_text.setEnabled(True)
+        self.ui.port_text.setEnabled(True)
+        # 清除航迹
+        self.page.runJavaScript('clearAllPath()')
         self.pause = True
         self.update_udp_params()
         
@@ -132,7 +138,7 @@ class Window(QMainWindow):
         """
         cli = (self.ui.client_ip_text.toPlainText(), int(self.ui.client_port_text.toPlainText()))
 
-        if cli not in self.client_list:
+        if f'IP:{cli[0]},Port:{cli[1]}' not in self.client_list:
             self.client_list.append('IP:{0},Port:{1}'.format(cli[0], cli[1]))
             self.client_model.setStringList(self.client_list)
             self.ui.client_listView.setModel(self.client_model)
@@ -251,6 +257,9 @@ class Window(QMainWindow):
         bauds = self.com_list[port_index].standardBaudRates()
         for b in bauds:
             self.ui.client_baud.addItem(str(b))
+            
+    def on_back_home_btn_clicked(self):
+        pass
 
 
 class UDP_Thread(QtCore.QThread):

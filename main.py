@@ -11,13 +11,14 @@ import socket
 import sys
 
 from PySide6 import QtCore
+from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
 from PySide6.QtCore import QUrl, Slot, QObject, Signal
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import *
 
-from ui.ui_main import Ui_MainWindow
+from ui.ui_app import Ui_MainWindow
 
 
 class Window(QMainWindow):
@@ -49,6 +50,9 @@ class Window(QMainWindow):
         self.home = []
         self.startPoint = []
         self.endPoint = []
+        self.com = QSerialPort()
+        self.com_list = []
+        self.current_client_type = 'UDP'
         """
         控件初始化
         """
@@ -56,8 +60,12 @@ class Window(QMainWindow):
         self.ui.connect_btn.clicked.connect(self.on_connect_btn_clicked)
         self.ui.over_btn.clicked.connect(self.on_over_btn_clicked)
         self.ui.add_client_btn.clicked.connect(self.on_add_client_btn_clicked)
-        # ip and port
+        self.ui.over_btn.setEnabled(False)
+        # client and server
+        self.ui.baud_label.setVisible(False)
+        self.ui.com_label.setVisible(False)
         self.ui.client_serial_port.setVisible(False)
+        self.ui.client_baud.setVisible(False)
         self.ui.ip_text.setText('127.0.0.1')
         self.ui.port_text.setText('9999')
         self.ui.client_ip_text.setText('127.0.0.1')
@@ -78,6 +86,7 @@ class Window(QMainWindow):
         self.client_connect_types = ['UDP', 'TCP', 'COM']
         self.ui.connect_types_comboBox.addItems(self.client_connect_types)
         self.ui.connect_types_comboBox.currentIndexChanged[int].connect(self.on_client_connect_comboBox_changed)
+        self.ui.client_serial_port.currentIndexChanged[int].connect(self.on_client_serial_port_changed)
 
     def init_baidu(self):
         path = os.getcwd().replace('\\', '/') + "/templates/baidu.html"
@@ -87,18 +96,30 @@ class Window(QMainWindow):
 
     def on_connect_btn_clicked(self):
         print("开始接收数据")
+        self.ui.connect_btn.setEnabled(False)
+        self.ui.over_btn.setEnabled(True)
         self.pause = False
         self.update_udp_params()
         self.udp.start()
 
     def on_over_btn_clicked(self):
         print("终止接收数据")
+        self.ui.connect_btn.setEnabled(True)
+        self.ui.over_btn.setEnabled(False)
         self.pause = True
         self.update_udp_params()
-
+        
     def on_add_client_btn_clicked(self):
         print("添加新终端")
-        self.update_client()
+        if self.current_client_type == 'UDP':
+            self.update_client()
+        elif self.current_client_type == 'COM':
+            port_name = self.com_list[self.ui.client_serial_port.currentIndex()].portName()
+            baud_rate = self.com_list[self.ui.client_serial_port.currentIndex()].standardBaudRates()[self.ui.client_baud.currentIndex()]
+            self.com.setPortName(str(port_name))
+            self.com.setBaudRate(int(baud_rate))
+            if self.com.open(QtCore.QIODevice.ReadOnly) == False:
+                print(f'OPen {port_name},baudRate {baud_rate} Port Failed')
 
     def update_udp_params(self):
         """udp数据监听服务器参数更新
@@ -201,18 +222,36 @@ class Window(QMainWindow):
         print(i, self.map_types[i])
         
     def on_client_connect_comboBox_changed(self, i):
+        self.current_client_type = self.client_connect_types[i]
         if self.client_connect_types[i] == 'COM':
+            self.com_list = QSerialPortInfo.availablePorts()
+            self.ui.client_serial_port.clear()
+            for i in self.com_list:
+                self.ui.client_serial_port.addItem(i.portName())
+            self.ui.baud_label.setVisible(True)
+            self.ui.com_label.setVisible(True)    
             self.ui.client_serial_port.setVisible(True)
+            self.ui.client_baud.setVisible(True)
             self.ui.ip_label.setVisible(False)
             self.ui.client_ip_text.setVisible(False)
             self.ui.port_label.setVisible(False)
             self.ui.client_port_text.setVisible(False)
         else:
+            self.com.close()
+            self.ui.baud_label.setVisible(False)
+            self.ui.com_label.setVisible(False)
             self.ui.client_serial_port.setVisible(False)
+            self.ui.client_baud.setVisible(False)
             self.ui.ip_label.setVisible(True)
             self.ui.client_ip_text.setVisible(True)
             self.ui.port_label.setVisible(True)
             self.ui.client_port_text.setVisible(True)
+            
+    def on_client_serial_port_changed(self, port_index):
+        bauds = self.com_list[port_index].standardBaudRates()
+        for b in bauds:
+            self.ui.client_baud.addItem(str(b))
+
 
 class UDP_Thread(QtCore.QThread):
     send_data = QtCore.Signal(tuple, str)

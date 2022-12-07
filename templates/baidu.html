@@ -109,7 +109,6 @@ var tempHome = [];
 var home = new BMapGL.Point(119.373175, 32.119817);
 var homeIcon = new BMapGL.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png", new BMapGL.Size(23, 35));
 var homeMarker = new BMapGL.Marker(home, {icon: homeIcon, enableMassClear: false});
-homeMarker.setLabel('H');
 homeMarker.setTitle('家');
 map.addOverlay(homeMarker);
 /*
@@ -274,9 +273,30 @@ function moveShipMarker(id, coord){
     for(let i = 0; i<allOverlay.length;i++){
         if(allOverlay[i].toString() === 'Marker'){
             if(allOverlay[i].id === id){
+                let p = allOverlay[i].getPosition();
+                let angle = calc_angle(p.lng, p.lat, coord.lng, coord.lat);
                 allOverlay[i].setPosition(new BMapGL.Point(coord.lng, coord.lat));
+                allOverlay[i].setRotation(angle + 90);  // 因为目前的标注物初始角度指向正西方向
             }
         }
     }
+}
+/*
+计算两个坐标点对于正北方向的朝向角度[0, 360]
+*/
+function calc_angle(x1, y1, x2, y2){
+    let angle = 0;
+    let rad = Math.PI / 180;
+    const a = Math.sin(x2 - x1) * Math.cos(y2);
+    const b = Math.cos(y1) * Math.sin(y2) - Math.sin(y1) * Math.cos(y2) * Math.cos(x2 - x1);
+    return radiansToDegrees(Math.atan2(a, b));
+}
+
+/*
+弧度转角度
+*/
+function radiansToDegrees(radians){
+    const degrees = radians % (2 * Math.PI);
+    return degrees * 180 / Math.PI;
 }
 </script>

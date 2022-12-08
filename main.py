@@ -58,6 +58,7 @@ class Window(QMainWindow):
         self.com_list = []
         self.current_client_type = 'UDP'
         self.ship_info = []  # 船的有关信息
+        self.way_points = []  # 航点
         """
         控件初始化
         """
@@ -233,6 +234,17 @@ class Window(QMainWindow):
         self.endPoint.append(float(x))
         self.endPoint.append(float(y))
         return 1
+
+    @Slot(str)
+    def recv_way_point(self, point):
+        i, x, y = point.split(',')
+        i = int(i)
+        if len(self.way_points) - 1 < i:
+            print(f'添加航点{i}, {x}, {y}')
+            self.way_points.append([float(x), float(y)])
+        else:
+            self.way_points[i] = [float(x), float(y)]
+            print(f'修改航点{i}, {x}, {y}')
 
     def on_map_types_comboBox_changed(self, i):
         """on_map_types_comboBox_changed 改变地图类型

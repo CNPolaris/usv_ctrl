@@ -58,22 +58,26 @@ map.addEventListener("rightclick", function (e) {
 var wayPointsPolyline = new BMap.Polyline(wayPoints, {strokeColor:"blue", strokeWeight:3, strokeOpacity:0.5});
 wayPointsPolyline.id = 'wayPoints';
 map.addOverlay(wayPointsPolyline);
-// 左键单击地图添加手工标记航点
 map.addEventListener('click', function(e){
 
     let wayPointsMarker = new BMap.Marker(e.point, {enableDragging: true});
     wayPointsMarker.id = wayPoints.length;
+    wayPointsMarker.setTitle(e.point.lng + ',' + e.point.lat);
+    let label = new BMap.Label(wayPointsMarker.id + 1, {position:e.point}); 
+    wayPointsMarker.setLabel(label);
     // 拖拽航点时折线跟随变化
     wayPointsMarker.addEventListener('dragging', function(e){
         wayPoints[e.target.id].lng = e.point.lng;
         wayPoints[e.target.id].lat = e.point.lat;
         wayPointsPolyline.setPath(wayPoints);
+        // 回传
         sentWayPointToQt(e.target.id, e.point);
     });
     map.addOverlay(wayPointsMarker);
     wayPoints.push(e.point);
-    sentWayPointToQt(wayPointsMarker.id, e.point);
     wayPointsPolyline.setPath(wayPoints);
+    // 回传
+    sentWayPointToQt(wayPointsMarker.id, e.point);
 });
 
 var menu = new BMap.ContextMenu();

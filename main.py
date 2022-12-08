@@ -127,7 +127,7 @@ class Window(QMainWindow):
             self.com.setPortName(str(port_name))
             self.com.setBaudRate(int(baud_rate))
             if self.com.open(QtCore.QIODevice.ReadOnly) == False:
-                print(f'OPen {port_name},baudRate {baud_rate} Port Failed')
+                print(f'Open {port_name},baudRate {baud_rate} Port Failed')
 
     def update_udp_params(self):
         """udp数据监听服务器参数更新
@@ -144,13 +144,13 @@ class Window(QMainWindow):
             ship = ShipInfo(ip = cli[0], port=cli[1], connect_type='UDP')
             self.ship_info.append(ship)
             self.page.runJavaScript(f'addNewShip({ship.get_ship_info()})')
-            self.client_list.append('IP:{0},Port:{1}'.format(cli[0], cli[1]))
+            self.client_list.append(f'IP:{cli[0]},Port:{cli[1]}')
             self.client_model.setStringList(self.client_list)
             self.ui.client_listView.setModel(self.client_model)
             self.clients.emit(cli)
 
     def log_list_view(self, addr, coord):
-        self.coords.append('addr:{0},coord:{1}'.format(addr, coord))
+        self.coords.append(f'addr:{addr},coord:{coord}')
         self.log_list_model.setStringList(self.coords)
         self.ui.logList.setModel(self.log_list_model)
         self.ui.logList.scrollToBottom()

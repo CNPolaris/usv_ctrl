@@ -54,8 +54,8 @@ def main():
         lats.append(x)
         lngs.append(y)
     pool = ThreadPoolExecutor(max_workers=2)
-    c_1 = pool.submit(cli, 8888, lats, lngs)
-    c_2 = pool.submit(cli, 6666, lats, lngs)
+    c_1 = pool.submit(cli, 8888, lats[:len(lats)//2], lngs[:len(lats)//2])
+    c_2 = pool.submit(cli, 6666, lats[len(lats)//2:], lngs[len(lats)//2:])
     pool.shutdown()
 
 if __name__ == '__main__':

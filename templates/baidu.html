@@ -49,17 +49,7 @@ var scaleCtrl = new BMapGL.ScaleControl();  // 添加比例尺控件
 map.addControl(scaleCtrl);
 var zoomCtrl = new BMapGL.ZoomControl();  // 添加缩放控件
 map.addControl(zoomCtrl);
-// 添加小车
-//var myIcon = new BMapGL.Icon("https://s2.loli.net/2022/12/03/19lmJ3PhQiA8xVR.png",new BMapGL.Size(52, 26),{imageOffset: new BMapGL.Size(0, 0)});
-//var point = new BMapGL.Point(119.373175, 32.119817);
-//var marker = new BMapGL.Marker(point, {icon: myIcon});   
-//marker.id = 1223;     // 创建标注
-//map.addOverlay(marker);
-/*console.log(map.getOverlays())
-console.log(map.getOverlays()[0].toString())
-for(let i =0 ;i<map.getOverlays();i++){
-    console.log(map.getOverlays()[i].toString());
-}*/
+
 //右键菜单
 //右键触发时临时保存触发点的坐标
 map.addEventListener("rightclick", function (e) {
@@ -147,22 +137,7 @@ function genCoordsLine(info, data) { //TODO 标注根据航向角转东
                         }
                     }
                 }
-            } 
-            /*
-            else {//不存在
-                if (i === polylineArray.length - 1){
-                    var pathArray = [];
-                    pathArray.push(new BMapGL.Point(data.lng, data.lat));
-                    var polylineTemp = new BMapGL.Polyline(pathArray,{strokeColor:"blue", strokeWeight:2, strokeOpacity:0.5});
-                    polylineTemp.id = id;
-                    map.addOverlay(polylineTemp);
-                    var polylineJson = {};
-                    polylineJson['id'] = id;
-                    polylineJson['pathArray'] = pathArray;
-                    polylineArray.push(polylineJson);
-                    break;
-                }
-            }*/
+            }
         }
         if(_have === false){ // 路径不存在
             var pathArray = [];
@@ -187,7 +162,6 @@ function genCoordsLine(info, data) { //TODO 标注根据航向角转东
         polylineJson['pathArray'] = pathArray;
         polylineArray.push(polylineJson);
     }
-    //marker.setPosition(new BMapGL.Point(data.lng, data.lat));
     moveShipMarker(id, data);
 }
 
@@ -197,9 +171,10 @@ function setHomePoint(){
     homeMarker.setPosition(home);
     py.update_home_point(tempHome[0] + ',' +tempHome[1]);
 }
-
+/*
+清除全部航迹
+*/
 function clearAllPath(){
-    console.log("清除全部航迹");
     if(polylineArray.length !== 0){
         for(let i =0; i<polylineArray.length; i++){
             if(polylineArray[i].id !== undefined){
@@ -264,7 +239,9 @@ function addNewShip(shipInfo){
         map.addOverlay(marker_s);
     }
 }
-
+/*
+移动船体标注
+*/
 function moveShipMarker(id, coord){
     var allOverlay = map.getOverlays();
     console.log(allOverlay);

@@ -3,12 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
     <title>地图显示</title>
     <!-- 加载地图JSAPI脚本 -->
     <script src="https://webapi.amap.com/maps?v=2.0&key=069ac10139c18a641e93de29ab45bdc3"></script>
-    <script type="text/javascript" src="../static/js/qwebchannel.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/CNPolaris/usv_ctrl/static/js/qwebchannel.js"></script>
     <style>
         html,
         body,
@@ -22,9 +23,10 @@
 <div id="container"></div>
 <script>
     const map = new AMap.Map('container', {
+        layers: [new AMap.TileLayer.Satellite()],
         viewMode: '2D', // 默认使用 2D 模式，如果希望使用带有俯仰角的 3D 模式，请设置 viewMode: '3D',
-        zoom: 11, //初始化地图层级
-        center: [116.397428, 39.90923] //初始化地图中心点
+        zoom: 18, //初始化地图层级
+        center: [119.373175, 32.119817] //初始化地图中心点
     });
 </script>
 </body>

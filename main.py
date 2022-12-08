@@ -35,6 +35,9 @@ class Window(QMainWindow):
         self.ui.setupUi(self)
         # 初始化地图
         self.page = self.ui.webEngineView.page()
+        self.ui.webEngineView.page().settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
+        self.ui.webEngineView.page().settings().setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, True)
+        self.ui.webEngineView.page().settings().setAttribute(QWebEngineSettings.LocalStorageEnabled, True)
         self.init_baidu()
         # UDP参数
         self.pause = False
@@ -82,6 +85,7 @@ class Window(QMainWindow):
         self.ui.client_listView.setModel(self.client_model)
         # the comboBox of map types
         self.map_types = ['百度地图', '高德地图', '腾讯地图', '天地图']
+        self.map_html = ['baidu', 'gaode', 'tencent', 'tiandi']
         self.ui.mapType_comboBox.addItems(self.map_types)
         self.ui.mapType_comboBox.currentIndexChanged[int].connect(self.on_map_types_comboBox_changed)
         # the comboBox of client connect type
@@ -91,10 +95,13 @@ class Window(QMainWindow):
         self.ui.client_serial_port.currentIndexChanged[int].connect(self.on_client_serial_port_changed)
         
     def init_baidu(self):
+        """init_baidu 初始化地图
+        """
         path = os.getcwd().replace('\\', '/') + "/templates/baidu.html"
-        with open(path, encoding="UTF-8") as f:
-            data = f.read()
-        self.ui.webEngineView.setHtml(data)
+        # with open(path, encoding="UTF-8") as f:
+        #     data = f.read()
+        # self.ui.webEngineView.setHtml(data)
+        self.ui.webEngineView.load(QtCore.QUrl(path))
 
     def on_connect_btn_clicked(self):
         print("开始接收数据")
@@ -180,6 +187,7 @@ class Window(QMainWindow):
             home点坐标 lng,lat
         """
         x, y = home.split(',')
+        print(f'家{x},{y}')
         self.home.append(float(x))
         self.home.append(float(y))
 
@@ -200,6 +208,7 @@ class Window(QMainWindow):
 
         """
         x, y = point.split(',')
+        print(f'起点{x},{y}')
         self.startPoint.append(float(x))
         self.startPoint.append(float(y))
         return 1
@@ -220,6 +229,7 @@ class Window(QMainWindow):
             0: set end point unsuccessful
         """
         x, y = point.split(',')
+        print(f'终点{x},{y}')
         self.endPoint.append(float(x))
         self.endPoint.append(float(y))
         return 1
@@ -234,6 +244,11 @@ class Window(QMainWindow):
         """
         # TODO实现地图类型切换
         print(i, self.map_types[i])
+        html_path = os.getcwd().replace('\\', '/') + f"/templates/{self.map_html[i]}.html"
+        # with open(html_path, encoding='UTF-8') as f:
+        #     html = f.read()
+        # self.ui.webEngineView.setHtml(html)
+        self.ui.webEngineView.load(QtCore.QUrl(html_path))
         
     def on_client_connect_comboBox_changed(self, i):
         self.current_client_type = self.client_connect_types[i]

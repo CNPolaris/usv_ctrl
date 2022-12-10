@@ -2,17 +2,21 @@
 
 import os
 import platform
+
+import PySide6
 import cv2
 import numpy as np
 
 from PySide6 import QtCore
-from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtWidgets import QMainWindow, QApplication
+from PySide6.QtGui import QImage, QPixmap, QIcon
+from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox
 
 from utils.HCNetSDK import *
 from utils.PlayCtrl import *
 
 from ui import ui_hk
+
+showMessage = QMessageBox.question
 
 
 class HKVideo(QtCore.QThread):
@@ -31,6 +35,7 @@ class HKVideo(QtCore.QThread):
         self.PlayCtrl_Port = c_long(-1)  # 播放句柄
         self.Playctrldll = None  # 播放库
         self.FuncDecCB = None  # 播放库解码回调函数，需要定义为全局的
+        self.lRealPlayHandle = None
 
         self.dev_info = None
         self.user_id = None
@@ -126,6 +131,94 @@ class HKVideo(QtCore.QThread):
             if not self.Playctrldll.PlayM4_InputData(self.PlayCtrl_Port, p_file_data, len(p_file_data)):
                 break
 
+    def move_top(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, TILT_UP, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def move_down(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, TILT_DOWN, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def pan_left(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, PAN_LEFT, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def pan_right(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, PAN_RIGHT, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def up_left(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, UP_LEFT, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def up_right(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, UP_RIGHT, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def down_left(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, DOWN_LEFT, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def down_right(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, DOWN_RIGHT, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def pan_auto(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, PAN_AUTO, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def zoom_in(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, ZOOM_IN, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def zoom_out(self, signal):
+        lRet = self.Objdll.NET_DVR_PTZControl(self.lRealPlayHandle, ZOOM_OUT, signal)
+        if lRet == 0:
+            print('Start ptz control fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
+        else:
+            print('Start ptz control success')
+
+    def destroy(self):
+        self.Objdll.NET_DVR_StopRealPlay(self.lRealPlayHandle)
+        if self.PlayCtrl_Port.value > -1:
+            self.Playctrldll.PlayM4_Stop(self.PlayCtrl_Port)
+            self.Playctrldll.PlayM4_CloseStream(self.PlayCtrl_Port)
+            self.Playctrldll.PlayM4_FreePort(self.PlayCtrl_Port)
+            self.PlayCtrl_Port = c_long(-1)
+        self.Objdll.NET_DVR_Logout(self.user_id)
+        self.Objdll.NET_DVR_Cleanup()
+        print("资源释放")
+
     def run(self) -> None:
         try:
             self.get_platform()
@@ -149,8 +242,8 @@ class HKVideo(QtCore.QThread):
                 exit()
             #
             self.funcRealDataCallBack_V30 = REALDATACALLBACK(self.real_data_callback_v30)
-            lRealPlayHandle = self.open_preview(self.funcRealDataCallBack_V30)
-            if lRealPlayHandle < 0:
+            self.lRealPlayHandle = self.open_preview(self.funcRealDataCallBack_V30)
+            if self.lRealPlayHandle < 0:
                 print('Open preview fail, error code is: %d' % self.Objdll.NET_DVR_GetLastError())
                 # 登出设备
                 self.Objdll.NET_DVR_Logout(lUserId)
@@ -162,28 +255,174 @@ class HKVideo(QtCore.QThread):
 
 
 class HK_Window(QMainWindow):
+    up_signal = QtCore.Signal(int)
+    down_signal = QtCore.Signal(int)
+    left_signal = QtCore.Signal(int)
+    right_signal = QtCore.Signal(int)
+    up_left_signal = QtCore.Signal(int)
+    up_right_signal = QtCore.Signal(int)
+    down_left_signal = QtCore.Signal(int)
+    down_right_signal = QtCore.Signal(int)
+    zoom_in_signal = QtCore.Signal(int)
+    zoom_out_signal = QtCore.Signal(int)
+
     def __init__(self):
         super(HK_Window, self).__init__()
         self.ui = ui_hk.Ui_MainWindow()
         self.ui.setupUi(self)
         self.hk = HKVideo()
-
+        # 主线程与监控线程通信
         self.hk.send_img_data.connect(self.recv_img)
-        self.ui.pushButton.clicked.connect(self.open_hk)
+        self.up_signal.connect(self.hk.move_top)
+        self.down_signal.connect(self.hk.move_down)
+        self.left_signal.connect(self.hk.pan_left)
+        self.right_signal.connect(self.hk.pan_right)
+        self.up_left_signal.connect(self.hk.up_left)
+        self.up_right_signal.connect(self.hk.up_right)
+        self.down_left_signal.connect(self.hk.down_left)
+        self.down_right_signal.connect(self.hk.down_right)
+        self.zoom_in_signal.connect(self.hk.zoom_in)
+        self.zoom_out_signal.connect(self.hk.zoom_out)
+        # 连接
+        self.connect_flag = True
+        self.open_hk()
+        self.ui.connect_btn.clicked.connect(self.open_hk)
+        # 初始化云台控制
+        self.init_ctrl_btn()
+
+    def init_ctrl_btn(self):
+        # 云台控制
+        self.ui.top_btn.setAutoRepeat(True)
+        self.ui.top_btn.setAutoRepeatDelay(400)
+        self.ui.top_btn.setAutoRepeatInterval(100)
+        self.ui.top_btn.setIcon(QIcon("static/images/up.png"))
+        self.ui.top_btn.pressed.connect(self.on_move_top_btn_pressed)
+        self.ui.top_btn.released.connect(self.on_move_top_btn_released)
+
+        self.ui.bottom_btn.setAutoRepeat(True)
+        self.ui.bottom_btn.setAutoRepeatDelay(400)
+        self.ui.bottom_btn.setAutoRepeatInterval(100)
+        self.ui.bottom_btn.setIcon(QIcon("static/images/down.png"))
+        self.ui.bottom_btn.pressed.connect(self.on_move_down_btn_pressed)
+        self.ui.bottom_btn.released.connect(self.on_move_down_btn_released)
+
+        self.ui.left_btn.setAutoRepeat(True)
+        self.ui.left_btn.setAutoRepeatDelay(400)
+        self.ui.left_btn.setAutoRepeatInterval(100)
+        self.ui.left_btn.setIcon(QIcon("static/images/left.png"))
+        self.ui.left_btn.pressed.connect(self.on_left_btn_pressed)
+        self.ui.left_btn.released.connect(self.on_left_btn_released)
+
+        self.ui.right_btn.setAutoRepeat(True)
+        self.ui.right_btn.setAutoRepeatDelay(400)
+        self.ui.right_btn.setAutoRepeatInterval(100)
+        self.ui.right_btn.setIcon(QIcon("static/images/right.png"))
+        self.ui.right_btn.pressed.connect(self.on_right_btn_pressed)
+        self.ui.right_btn.released.connect(self.on_right_btn_released)
+
+        self.ui.up_left_btn.setAutoRepeat(True)
+        self.ui.up_left_btn.setAutoRepeatDelay(400)
+        self.ui.up_left_btn.setAutoRepeatInterval(100)
+        self.ui.up_left_btn.setIcon(QIcon("static/images/up_left.png"))
+        self.ui.up_left_btn.pressed.connect(self.on_up_left_btn_pressed)
+        self.ui.up_left_btn.released.connect(self.on_up_left_btn_released)
+
+        self.ui.up_right_btn.setAutoRepeat(True)
+        self.ui.up_right_btn.setAutoRepeatDelay(400)
+        self.ui.up_right_btn.setAutoRepeatInterval(100)
+        self.ui.up_right_btn.setIcon(QIcon("static/images/up_right.png"))
+        self.ui.up_right_btn.pressed.connect(self.on_up_right_btn_pressed)
+        self.ui.up_right_btn.released.connect(self.on_up_right_btn_released)
+
+        self.ui.down_left_btn.setAutoRepeat(True)
+        self.ui.down_left_btn.setAutoRepeatDelay(400)
+        self.ui.down_left_btn.setAutoRepeatInterval(100)
+        self.ui.down_left_btn.setIcon(QIcon("static/images/down_left.png"))
+        self.ui.down_left_btn.pressed.connect(self.on_down_left_btn_pressed)
+        self.ui.down_left_btn.released.connect(self.on_down_left_btn_released)
+
+        self.ui.down_right_btn.setAutoRepeat(True)
+        self.ui.down_right_btn.setAutoRepeatDelay(400)
+        self.ui.down_right_btn.setAutoRepeatInterval(100)
+        self.ui.down_right_btn.setIcon(QIcon("static/images/down_right.png"))
+        self.ui.down_right_btn.pressed.connect(self.on_down_right_btn_pressed)
+        self.ui.down_right_btn.released.connect(self.on_down_right_btn_released)
 
     def recv_img(self, array, w, h):
-        # img_rgb = cv2.cvtColor(array, cv2.COLOR_YUV2BGR_YV12)
-        # img = QImage(array, array.shape[1], array[0], QImage.Format_RGB888)
-        #
-        # self.ui.video.setPixmap(QPixmap.fromImage(img))
         show = cv2.resize(array, (w, h))
         show = cv2.cvtColor(show, cv2.COLOR_BGR2RGB)
-        showImage = QImage(show.data, show.shape[1], show.shape[0], QImage.Format_RGB888)
+        show_image = QImage(show.data, show.shape[1], show.shape[0], QImage.Format_RGB888)
 
-        self.ui.video.setPixmap(QPixmap.fromImage(showImage))
+        self.ui.video.setPixmap(QPixmap.fromImage(show_image))
 
     def open_hk(self):
-        self.hk.start()
+
+        if self.connect_flag:
+            self.hk.start()
+            self.ui.connect_btn.setText("已连接")
+            self.connect_flag = False
+        elif not self.connect_flag:
+            self.connect_flag = True
+            self.ui.connect_btn.setText("已断开")
+            self.hk.destroy()
+
+    def on_move_top_btn_pressed(self):
+        self.up_signal.emit(0)
+
+    def on_move_top_btn_released(self):
+        self.up_signal.emit(1)
+
+    def on_move_down_btn_pressed(self):
+        self.down_signal.emit(0)
+
+    def on_move_down_btn_released(self):
+        self.down_signal.emit(1)
+
+    def on_left_btn_pressed(self):
+        self.left_signal.emit(0)
+
+    def on_left_btn_released(self):
+        self.left_signal.emit(1)
+
+    def on_right_btn_pressed(self):
+        self.right_signal.emit(0)
+
+    def on_right_btn_released(self):
+        self.right_signal.emit(1)
+
+    def on_up_right_btn_pressed(self):
+        self.up_right_signal.emit(0)
+
+    def on_up_right_btn_released(self):
+        self.up_right_signal.emit(1)
+
+    def on_up_left_btn_pressed(self):
+        self.up_left_signal.emit(0)
+
+    def on_up_left_btn_released(self):
+        self.up_left_signal.emit(1)
+
+    def on_down_right_btn_pressed(self):
+        self.down_right_signal.emit(0)
+
+    def on_down_right_btn_released(self):
+        self.down_right_signal.emit(1)
+
+    def on_down_left_btn_pressed(self):
+        self.down_left_signal.emit(0)
+
+    def on_down_left_btn_released(self):
+        self.down_left_signal.emit(1)
+
+    def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
+        reply = showMessage(self, '警告', "系统将退出，是否确认?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            self.hk.destroy()
+            self.hk.exit(retcode=0)
+            event.accept()
+        else:
+            event.ignore()
 
 
 if __name__ == '__main__':

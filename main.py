@@ -6,12 +6,16 @@ Author: TianXin
 Date：2022-11-29
 -------------------------------------------------
 """
+import ctypes
 import os
 import socket
 import sys
 import uuid
 
+import PySide6
+import cv2
 from PySide6 import QtCore
+from PySide6.QtGui import QIcon, QImage, QPixmap
 from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
 from PySide6.QtCore import QUrl, Slot, QObject, Signal
 from PySide6.QtWebChannel import QWebChannel
@@ -19,13 +23,31 @@ from PySide6.QtWebEngineCore import QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import *
 
+from hk import HKVideo
 from ui.ui_app import Ui_MainWindow
 from ship_info import ShipInfo
+
+showMessage = QMessageBox.question
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
+
 
 class Window(QMainWindow):
     # 主线程向udp线程传参
     udp_params = QtCore.Signal(list)
     clients = QtCore.Signal(tuple)
+
+    # 监控信号
+    up_signal = QtCore.Signal(int)
+    down_signal = QtCore.Signal(int)
+    left_signal = QtCore.Signal(int)
+    right_signal = QtCore.Signal(int)
+    up_left_signal = QtCore.Signal(int)
+    up_right_signal = QtCore.Signal(int)
+    down_left_signal = QtCore.Signal(int)
+    down_right_signal = QtCore.Signal(int)
+    zoom_in_signal = QtCore.Signal(int)
+    zoom_out_signal = QtCore.Signal(int)
+    pan_auto_signal = QtCore.Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -43,11 +65,26 @@ class Window(QMainWindow):
         self.pause = False
         # 数据接收主线程
         self.udp = UDP_Thread()
+        self.hk = HKVideo()
         # 主线程向udp子线程传参
         self.udp_params.connect(self.udp.udp_params_update)
         self.clients.connect(self.udp.add_client)
         self.udp.send_data.connect(self.log_list_view)
         self.udp.send_data.connect(self.send_coord_to_map)
+        # 主线程与监控线程通信
+        self.hk.send_img_data.connect(self.recv_img)
+        self.up_signal.connect(self.hk.move_top)
+        self.down_signal.connect(self.hk.move_down)
+        self.left_signal.connect(self.hk.pan_left)
+        self.right_signal.connect(self.hk.pan_right)
+        self.up_left_signal.connect(self.hk.up_left)
+        self.up_right_signal.connect(self.hk.up_right)
+        self.down_left_signal.connect(self.hk.down_left)
+        self.down_right_signal.connect(self.hk.down_right)
+        self.zoom_in_signal.connect(self.hk.zoom_in)
+        self.zoom_out_signal.connect(self.hk.zoom_out)
+        self.pan_auto_signal.connect(self.hk.pan_auto)
+
         """
         参数
         """
@@ -94,7 +131,16 @@ class Window(QMainWindow):
         self.ui.connect_types_comboBox.addItems(self.client_connect_types)
         self.ui.connect_types_comboBox.currentIndexChanged[int].connect(self.on_client_connect_comboBox_changed)
         self.ui.client_serial_port.currentIndexChanged[int].connect(self.on_client_serial_port_changed)
-        
+        # 初始化云台控制
+        self.init_ctrl_btn()
+        # 连接
+        self.connect_flag = True
+        self.ui.pan_auto_btn.clicked.connect(self.on_pan_auto_btn_clicked)
+        self.open_hk()
+        self.ui.connect_btn.clicked.connect(self.open_hk)
+        # 自动化控制
+        self.auto_flag = False
+
     def init_baidu(self):
         """init_baidu 初始化地图
         """
@@ -124,14 +170,15 @@ class Window(QMainWindow):
         self.page.runJavaScript('clearAllPath()')
         self.pause = True
         self.update_udp_params()
-        
+
     def on_add_client_btn_clicked(self):
         print("添加新终端")
         if self.current_client_type == 'UDP':
             self.update_client()
         elif self.current_client_type == 'COM':
             port_name = self.com_list[self.ui.client_serial_port.currentIndex()].portName()
-            baud_rate = self.com_list[self.ui.client_serial_port.currentIndex()].standardBaudRates()[self.ui.client_baud.currentIndex()]
+            baud_rate = self.com_list[self.ui.client_serial_port.currentIndex()].standardBaudRates()[
+                self.ui.client_baud.currentIndex()]
             self.com.setPortName(str(port_name))
             self.com.setBaudRate(int(baud_rate))
             if self.com.open(QtCore.QIODevice.ReadOnly) == False:
@@ -149,7 +196,7 @@ class Window(QMainWindow):
         cli = (self.ui.client_ip_text.toPlainText(), int(self.ui.client_port_text.toPlainText()))
         is_add = True
         if f'IP:{cli[0]},Port:{cli[1]}' not in self.client_list:
-            ship = ShipInfo(ip = cli[0], port=cli[1], connect_type='UDP')
+            ship = ShipInfo(ip=cli[0], port=cli[1], connect_type='UDP')
             self.ship_info.append(ship)
             self.page.runJavaScript(f'addNewShip({ship.get_ship_info()})')
             self.client_list.append(f'IP:{cli[0]},Port:{cli[1]}')
@@ -261,7 +308,7 @@ class Window(QMainWindow):
         #     html = f.read()
         # self.ui.webEngineView.setHtml(html)
         self.ui.webEngineView.load(QtCore.QUrl(html_path))
-        
+
     def on_client_connect_comboBox_changed(self, i):
         self.current_client_type = self.client_connect_types[i]
         if self.client_connect_types[i] == 'COM':
@@ -270,7 +317,7 @@ class Window(QMainWindow):
             for i in self.com_list:
                 self.ui.client_serial_port.addItem(i.portName())
             self.ui.baud_label.setVisible(True)
-            self.ui.com_label.setVisible(True)    
+            self.ui.com_label.setVisible(True)
             self.ui.client_serial_port.setVisible(True)
             self.ui.client_baud.setVisible(True)
             self.ui.ip_label.setVisible(False)
@@ -287,14 +334,183 @@ class Window(QMainWindow):
             self.ui.client_ip_text.setVisible(True)
             self.ui.port_label.setVisible(True)
             self.ui.client_port_text.setVisible(True)
-            
+
     def on_client_serial_port_changed(self, port_index):
         bauds = self.com_list[port_index].standardBaudRates()
         for b in bauds:
             self.ui.client_baud.addItem(str(b))
-            
+
     def on_back_home_btn_clicked(self):
         pass
+
+    def init_ctrl_btn(self):
+        # 云台控制
+        self.ui.top_btn.setAutoRepeat(True)
+        self.ui.top_btn.setAutoRepeatDelay(400)
+        self.ui.top_btn.setAutoRepeatInterval(100)
+        self.ui.top_btn.setIcon(QIcon("static/images/up.png"))
+        self.ui.top_btn.pressed.connect(self.on_move_top_btn_pressed)
+        self.ui.top_btn.released.connect(self.on_move_top_btn_released)
+
+        self.ui.bottom_btn.setAutoRepeat(True)
+        self.ui.bottom_btn.setAutoRepeatDelay(400)
+        self.ui.bottom_btn.setAutoRepeatInterval(100)
+        self.ui.bottom_btn.setIcon(QIcon("static/images/down.png"))
+        self.ui.bottom_btn.pressed.connect(self.on_move_down_btn_pressed)
+        self.ui.bottom_btn.released.connect(self.on_move_down_btn_released)
+
+        self.ui.left_btn.setAutoRepeat(True)
+        self.ui.left_btn.setAutoRepeatDelay(400)
+        self.ui.left_btn.setAutoRepeatInterval(100)
+        self.ui.left_btn.setIcon(QIcon("static/images/left.png"))
+        self.ui.left_btn.pressed.connect(self.on_left_btn_pressed)
+        self.ui.left_btn.released.connect(self.on_left_btn_released)
+
+        self.ui.right_btn.setAutoRepeat(True)
+        self.ui.right_btn.setAutoRepeatDelay(400)
+        self.ui.right_btn.setAutoRepeatInterval(100)
+        self.ui.right_btn.setIcon(QIcon("static/images/right.png"))
+        self.ui.right_btn.pressed.connect(self.on_right_btn_pressed)
+        self.ui.right_btn.released.connect(self.on_right_btn_released)
+
+        self.ui.up_left_btn.setAutoRepeat(True)
+        self.ui.up_left_btn.setAutoRepeatDelay(400)
+        self.ui.up_left_btn.setAutoRepeatInterval(100)
+        self.ui.up_left_btn.setIcon(QIcon("static/images/up_left.png"))
+        self.ui.up_left_btn.pressed.connect(self.on_up_left_btn_pressed)
+        self.ui.up_left_btn.released.connect(self.on_up_left_btn_released)
+
+        self.ui.up_right_btn.setAutoRepeat(True)
+        self.ui.up_right_btn.setAutoRepeatDelay(400)
+        self.ui.up_right_btn.setAutoRepeatInterval(100)
+        self.ui.up_right_btn.setIcon(QIcon("static/images/up_right.png"))
+        self.ui.up_right_btn.pressed.connect(self.on_up_right_btn_pressed)
+        self.ui.up_right_btn.released.connect(self.on_up_right_btn_released)
+
+        self.ui.down_left_btn.setAutoRepeat(True)
+        self.ui.down_left_btn.setAutoRepeatDelay(400)
+        self.ui.down_left_btn.setAutoRepeatInterval(100)
+        self.ui.down_left_btn.setIcon(QIcon("static/images/down_left.png"))
+        self.ui.down_left_btn.pressed.connect(self.on_down_left_btn_pressed)
+        self.ui.down_left_btn.released.connect(self.on_down_left_btn_released)
+
+        self.ui.down_right_btn.setAutoRepeat(True)
+        self.ui.down_right_btn.setAutoRepeatDelay(400)
+        self.ui.down_right_btn.setAutoRepeatInterval(100)
+        self.ui.down_right_btn.setIcon(QIcon("static/images/down_right.png"))
+        self.ui.down_right_btn.pressed.connect(self.on_down_right_btn_pressed)
+        self.ui.down_right_btn.released.connect(self.on_down_right_btn_released)
+
+        self.ui.zoom_in_btn.setAutoRepeat(True)
+        self.ui.zoom_in_btn.setAutoRepeatDelay(400)
+        self.ui.zoom_in_btn.setAutoRepeatInterval(100)
+        self.ui.zoom_in_btn.setIcon(QIcon("static/images/out.png"))
+        self.ui.zoom_in_btn.pressed.connect(self.on_zoom_in_btn_pressed)
+        self.ui.zoom_in_btn.released.connect(self.on_zoom_in_btn_released)
+
+        self.ui.zoom_out_btn.setAutoRepeat(True)
+        self.ui.zoom_out_btn.setAutoRepeatDelay(400)
+        self.ui.zoom_out_btn.setAutoRepeatInterval(100)
+        self.ui.zoom_out_btn.setIcon(QIcon("static/images/in.png"))
+        self.ui.zoom_out_btn.pressed.connect(self.on_zoom_out_btn_pressed)
+        self.ui.zoom_out_btn.released.connect(self.on_zoom_out_btn_released)
+
+    def recv_img(self, array, w, h):
+        show = cv2.resize(array, (960, 640))
+        show = cv2.cvtColor(show, cv2.COLOR_BGR2RGB)
+        show_image = QImage(show.data, show.shape[1], show.shape[0], QImage.Format_RGB888)
+
+        self.ui.video.setPixmap(QPixmap.fromImage(show_image))
+
+    def open_hk(self):
+        if self.connect_flag:
+            self.hk.start()
+            self.ui.connect_btn.setText("已连接")
+            self.connect_flag = False
+        else:
+            self.connect_flag = True
+            self.ui.connect_btn.setText("已断开")
+            self.hk.destroy()
+
+    def on_move_top_btn_pressed(self):
+        self.up_signal.emit(0)
+
+    def on_move_top_btn_released(self):
+        self.up_signal.emit(1)
+
+    def on_move_down_btn_pressed(self):
+        self.down_signal.emit(0)
+
+    def on_move_down_btn_released(self):
+        self.down_signal.emit(1)
+
+    def on_left_btn_pressed(self):
+        self.left_signal.emit(0)
+
+    def on_left_btn_released(self):
+        self.left_signal.emit(1)
+
+    def on_right_btn_pressed(self):
+        self.right_signal.emit(0)
+
+    def on_right_btn_released(self):
+        self.right_signal.emit(1)
+
+    def on_up_right_btn_pressed(self):
+        self.up_right_signal.emit(0)
+
+    def on_up_right_btn_released(self):
+        self.up_right_signal.emit(1)
+
+    def on_up_left_btn_pressed(self):
+        self.up_left_signal.emit(0)
+
+    def on_up_left_btn_released(self):
+        self.up_left_signal.emit(1)
+
+    def on_down_right_btn_pressed(self):
+        self.down_right_signal.emit(0)
+
+    def on_down_right_btn_released(self):
+        self.down_right_signal.emit(1)
+
+    def on_down_left_btn_pressed(self):
+        self.down_left_signal.emit(0)
+
+    def on_down_left_btn_released(self):
+        self.down_left_signal.emit(1)
+
+    def on_zoom_in_btn_pressed(self):
+        self.zoom_in_signal.emit(0)
+
+    def on_zoom_in_btn_released(self):
+        self.zoom_in_signal.emit(1)
+
+    def on_zoom_out_btn_pressed(self):
+        self.zoom_out_signal.emit(0)
+
+    def on_zoom_out_btn_released(self):
+        self.zoom_out_signal.emit(1)
+
+    def on_pan_auto_btn_clicked(self):
+        if not self.auto_flag:
+            self.pan_auto_signal.emit(0)
+            self.auto_flag = True
+            self.ui.pan_auto_btn.setText("STOP")
+        else:
+            self.pan_auto_signal.emit(1)
+            self.ui.pan_auto_btn.setText("AUTO")
+            self.auto_flag = False
+
+    def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
+        reply = showMessage(self, '警告', "系统将退出，是否确认?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            self.hk.destroy()
+            self.hk.exit(retcode=0)
+            event.accept()
+        else:
+            event.ignore()
 
 
 class UDP_Thread(QtCore.QThread):

@@ -2,7 +2,6 @@
 
 import os
 import platform
-
 import PySide6
 import cv2
 import numpy as np
@@ -13,10 +12,10 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox
 
 from utils.HCNetSDK import *
 from utils.PlayCtrl import *
-
 from ui import ui_hk
 
 showMessage = QMessageBox.question
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
 
 
 class HKVideo(QtCore.QThread):
@@ -265,6 +264,7 @@ class HK_Window(QMainWindow):
     down_right_signal = QtCore.Signal(int)
     zoom_in_signal = QtCore.Signal(int)
     zoom_out_signal = QtCore.Signal(int)
+    pan_auto_signal = QtCore.Signal(int)
 
     def __init__(self):
         super(HK_Window, self).__init__()
@@ -283,12 +283,21 @@ class HK_Window(QMainWindow):
         self.down_right_signal.connect(self.hk.down_right)
         self.zoom_in_signal.connect(self.hk.zoom_in)
         self.zoom_out_signal.connect(self.hk.zoom_out)
-        # 连接
-        self.connect_flag = True
-        self.open_hk()
-        self.ui.connect_btn.clicked.connect(self.open_hk)
+        self.pan_auto_signal.connect(self.hk.pan_auto)
+        # 设置图片大小
+        self.width = self.ui.video.geometry().width()
+        self.height = self.ui.video.geometry().height()
+
+        print(self.size)
         # 初始化云台控制
         self.init_ctrl_btn()
+        # 连接
+        self.connect_flag = True
+        self.ui.pan_auto_btn.clicked.connect(self.on_pan_auto_btn_clicked)
+        self.open_hk()
+        self.ui.connect_btn.clicked.connect(self.open_hk)
+        # 自动化控制
+        self.auto_flag = False
 
     def init_ctrl_btn(self):
         # 云台控制
@@ -348,20 +357,33 @@ class HK_Window(QMainWindow):
         self.ui.down_right_btn.pressed.connect(self.on_down_right_btn_pressed)
         self.ui.down_right_btn.released.connect(self.on_down_right_btn_released)
 
+        self.ui.zoom_in_btn.setAutoRepeat(True)
+        self.ui.zoom_in_btn.setAutoRepeatDelay(400)
+        self.ui.zoom_in_btn.setAutoRepeatInterval(100)
+        self.ui.zoom_in_btn.setIcon(QIcon("static/images/out.png"))
+        self.ui.zoom_in_btn.pressed.connect(self.on_zoom_in_btn_pressed)
+        self.ui.zoom_in_btn.released.connect(self.on_zoom_in_btn_released)
+
+        self.ui.zoom_out_btn.setAutoRepeat(True)
+        self.ui.zoom_out_btn.setAutoRepeatDelay(400)
+        self.ui.zoom_out_btn.setAutoRepeatInterval(100)
+        self.ui.zoom_out_btn.setIcon(QIcon("static/images/in.png"))
+        self.ui.zoom_out_btn.pressed.connect(self.on_zoom_out_btn_pressed)
+        self.ui.zoom_out_btn.released.connect(self.on_zoom_out_btn_released)
+
     def recv_img(self, array, w, h):
-        show = cv2.resize(array, (w, h))
+        show = cv2.resize(array, (960, 640))
         show = cv2.cvtColor(show, cv2.COLOR_BGR2RGB)
         show_image = QImage(show.data, show.shape[1], show.shape[0], QImage.Format_RGB888)
 
         self.ui.video.setPixmap(QPixmap.fromImage(show_image))
 
     def open_hk(self):
-
         if self.connect_flag:
             self.hk.start()
             self.ui.connect_btn.setText("已连接")
             self.connect_flag = False
-        elif not self.connect_flag:
+        else:
             self.connect_flag = True
             self.ui.connect_btn.setText("已断开")
             self.hk.destroy()
@@ -414,6 +436,28 @@ class HK_Window(QMainWindow):
     def on_down_left_btn_released(self):
         self.down_left_signal.emit(1)
 
+    def on_zoom_in_btn_pressed(self):
+        self.zoom_in_signal.emit(0)
+
+    def on_zoom_in_btn_released(self):
+        self.zoom_in_signal.emit(1)
+
+    def on_zoom_out_btn_pressed(self):
+        self.zoom_out_signal.emit(0)
+
+    def on_zoom_out_btn_released(self):
+        self.zoom_out_signal.emit(1)
+
+    def on_pan_auto_btn_clicked(self):
+        if not self.auto_flag:
+            self.pan_auto_signal.emit(0)
+            self.auto_flag = True
+            self.ui.pan_auto_btn.setText("STOP")
+        else:
+            self.pan_auto_signal.emit(1)
+            self.ui.pan_auto_btn.setText("AUTO")
+            self.auto_flag = False
+
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
         reply = showMessage(self, '警告', "系统将退出，是否确认?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
@@ -426,8 +470,6 @@ class HK_Window(QMainWindow):
 
 
 if __name__ == '__main__':
-    # test = HKVideo()
-    # test.open_win()
     app = QApplication(sys.argv)
     hk_win = HK_Window()
     hk_win.show()

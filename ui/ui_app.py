@@ -261,6 +261,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.connect_btn_2)
 
+        self.upload_img_btn = QPushButton(self.tab_2)
+        self.upload_img_btn.setObjectName(u"upload_img_btn")
+
+        self.verticalLayout_3.addWidget(self.upload_img_btn)
+
         self.groupBox_5 = QGroupBox(self.tab_2)
         self.groupBox_5.setObjectName(u"groupBox_5")
         self.groupBox_5.setMinimumSize(QSize(187, 61))
@@ -372,7 +377,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -399,6 +404,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_1), QCoreApplication.translate("MainWindow", u"\u822a\u884c\u6570\u636e", None))
         self.video.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.connect_btn_2.setText(QCoreApplication.translate("MainWindow", u"\u8fde\u63a5", None))
+        self.upload_img_btn.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
         self.groupBox_5.setTitle(QCoreApplication.translate("MainWindow", u"GroupBox", None))
         self.zoom_out_btn.setText("")
         self.zoom_in_btn.setText("")

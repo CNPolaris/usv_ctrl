@@ -711,6 +711,13 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="upload_img_btn">
+             <property name="text">
+              <string>PushButton</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QGroupBox" name="groupBox_5">
              <property name="minimumSize">
               <size>

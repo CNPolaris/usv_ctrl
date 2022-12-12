@@ -6,14 +6,15 @@ Author: TianXin
 Date：2022-11-29
 -------------------------------------------------
 """
+import asyncio
 import ctypes
 import os
 import socket
 import sys
-import uuid
 
 import PySide6
 import cv2
+import websocket
 from PySide6 import QtCore
 from PySide6.QtGui import QIcon, QImage, QPixmap
 from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
@@ -22,6 +23,7 @@ from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import *
+from websocket import ABNF
 
 from hk import HKVideo
 from ui.ui_app import Ui_MainWindow
@@ -35,7 +37,7 @@ class Window(QMainWindow):
     # 主线程向udp线程传参
     udp_params = QtCore.Signal(list)
     clients = QtCore.Signal(tuple)
-
+    img_data = QtCore.Signal(object)
     # 监控信号
     up_signal = QtCore.Signal(int)
     down_signal = QtCore.Signal(int)
@@ -66,6 +68,7 @@ class Window(QMainWindow):
         # 数据接收主线程
         self.udp = UDP_Thread()
         self.hk = HKVideo()
+        self.video = VideoWebThread()
         # 主线程向udp子线程传参
         self.udp_params.connect(self.udp.udp_params_update)
         self.clients.connect(self.udp.add_client)
@@ -84,7 +87,8 @@ class Window(QMainWindow):
         self.zoom_in_signal.connect(self.hk.zoom_in)
         self.zoom_out_signal.connect(self.hk.zoom_out)
         self.pan_auto_signal.connect(self.hk.pan_auto)
-
+        # 主线程向视频推流线程传值
+        self.img_data.connect(self.video.recv_img)
         """
         参数
         """
@@ -138,6 +142,9 @@ class Window(QMainWindow):
         self.ui.pan_auto_btn.clicked.connect(self.on_pan_auto_btn_clicked)
         self.open_hk()
         self.ui.connect_btn.clicked.connect(self.open_hk)
+        # 云端推流 TODO:效率太低 问题很大
+        self.upload_flag = False
+        self.ui.upload_img_btn.clicked.connect(self.on_upload_img_btn_clicked)
         # 自动化控制
         self.auto_flag = False
 
@@ -145,9 +152,6 @@ class Window(QMainWindow):
         """init_baidu 初始化地图
         """
         path = os.getcwd().replace('\\', '/') + "/templates/baidu.html"
-        # with open(path, encoding="UTF-8") as f:
-        #     data = f.read()
-        # self.ui.webEngineView.setHtml(data)
         self.ui.webEngineView.load(QtCore.QUrl(path))
 
     def on_connect_btn_clicked(self):
@@ -419,7 +423,9 @@ class Window(QMainWindow):
         show = cv2.resize(array, (960, 640))
         show = cv2.cvtColor(show, cv2.COLOR_BGR2RGB)
         show_image = QImage(show.data, show.shape[1], show.shape[0], QImage.Format_RGB888)
-
+        if self.upload_flag:
+            ret, buffer = cv2.imencode('.jpg', show)
+            self.img_data.emit(buffer.tobytes())
         self.ui.video.setPixmap(QPixmap.fromImage(show_image))
 
     def open_hk(self):
@@ -512,6 +518,16 @@ class Window(QMainWindow):
         else:
             event.ignore()
 
+    def on_upload_img_btn_clicked(self):
+        if not self.upload_flag:
+            self.ui.upload_img_btn.setText("停止推流")
+            self.video.start()
+            self.upload_flag = True
+        else:
+            self.ui.upload_img_btn.setText("开始推流")
+            self.video.exit(retcode=1)
+            self.upload_flag = False
+
 
 class UDP_Thread(QtCore.QThread):
     send_data = QtCore.Signal(tuple, str)
@@ -549,6 +565,21 @@ class UDP_Thread(QtCore.QThread):
         if client_info not in self.client:
             # print(client_info)
             self.client.append(client_info)
+
+
+class VideoWebThread(QtCore.QThread):
+    def __init__(self):
+        super().__init__()
+        self.url = 'ws://127.0.0.1:8000/ship/video/1/'
+        self.data = "test upload"
+        self.ws = websocket.WebSocket()
+
+    def run(self) -> None:
+        print("VideoUpload")
+        self.ws.connect(self.url)
+
+    def recv_img(self, data):
+        self.ws.send(data, opcode=ABNF.OPCODE_BINARY)
 
 
 def win():

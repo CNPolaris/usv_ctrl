@@ -100,6 +100,7 @@ class Window(QMainWindow):
         self.current_client_type = 'UDP'
         self.ship_info = []  # 船的有关信息
         self.way_points = []  # 航点
+        self.root_path = os.getcwd().replace("\\", "/")
         """
         控件初始化
         """
@@ -141,7 +142,7 @@ class Window(QMainWindow):
         self.connect_flag = True
         self.ui.pan_auto_btn.clicked.connect(self.on_pan_auto_btn_clicked)
         self.open_hk()
-        self.ui.connect_btn.clicked.connect(self.open_hk)
+        self.ui.connect_btn_2.clicked.connect(self.open_hk)
         # 云端推流 TODO:效率太低 问题很大
         self.upload_flag = False
         self.ui.upload_img_btn.clicked.connect(self.on_upload_img_btn_clicked)
@@ -307,7 +308,7 @@ class Window(QMainWindow):
         """
         # TODO实现地图类型切换
         print(i, self.map_types[i])
-        html_path = os.getcwd().replace('\\', '/') + f"/templates/{self.map_html[i]}.html"
+        html_path = self.root_path + "/templates/{0}.html".format(self.map_html[i])
         # with open(html_path, encoding='UTF-8') as f:
         #     html = f.read()
         # self.ui.webEngineView.setHtml(html)
@@ -431,11 +432,11 @@ class Window(QMainWindow):
     def open_hk(self):
         if self.connect_flag:
             self.hk.start()
-            self.ui.connect_btn.setText("已连接")
+            self.ui.connect_btn_2.setText("已连接")
             self.connect_flag = False
         else:
             self.connect_flag = True
-            self.ui.connect_btn.setText("已断开")
+            self.ui.connect_btn_2.setText("已断开")
             self.hk.destroy()
 
     def on_move_top_btn_pressed(self):

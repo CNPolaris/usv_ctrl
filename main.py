@@ -18,7 +18,7 @@ import websocket
 from PySide6 import QtCore
 from PySide6.QtGui import QIcon, QImage, QPixmap
 from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
-from PySide6.QtCore import QUrl, Slot, QObject, Signal
+from PySide6.QtCore import QUrl, Slot, QObject, Signal, QModelIndex
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -126,6 +126,7 @@ class Window(QMainWindow):
         self.client_list = []  # 保存UDP连接的终端ip和port
         self.client_model = QtCore.QStringListModel(self.client_list)
         self.ui.client_listView.setModel(self.client_model)
+        self.ui.client_listView.doubleClicked.connect(self.delete_clients_list_view)
         # the comboBox of map types
         self.map_types = ['百度地图', '高德地图', '腾讯地图', '天地图']
         self.map_html = ['baidu', 'gaode', 'tencent', 'tiandi']
@@ -208,6 +209,23 @@ class Window(QMainWindow):
             self.client_model.setStringList(self.client_list)
             self.ui.client_listView.setModel(self.client_model)
             self.clients.emit(cli)
+        else:
+            QMessageBox.information(self, "添加终端", "该终端已经存在")
+
+    def delete_clients_list_view(self):
+        """终端列表移除某一项
+        Returns
+        -------
+
+        """
+        selected = self.ui.client_listView.selectedIndexes()
+        index = selected[0].row()
+        reply = showMessage(self, "终端列表", f"是否要删除终端{self.client_list[index]}",
+                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            del self.client_list[index]
+            self.client_model.setStringList(self.client_list)
+            self.ui.client_listView.setModel(self.client_model)
 
     def log_list_view(self, addr, coord):
         self.coords.append(f'addr:{addr},coord:{coord}')

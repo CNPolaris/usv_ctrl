@@ -10,6 +10,7 @@ import os
 
 from .convert import convert_by_baidu
 
+
 def transform_degree(degree):
     """GPS坐标转dd.mmmm格式
         纬度 度分 ddmm.mmmmm 转dd.ddddd
@@ -514,7 +515,7 @@ def check_in_lake(lake_df, island_df, shape):
         return lake_df.iloc[0]['geometry'].intersects(shape)
 
 
-def gen_grids_array(grid, params, lake_path, island_path, show=False):
+def gen_grids_array(grid, params, lake_path=None, island_path=None, show=False):
     """生成栅格矩阵 输入生成的栅格，栅格参数，水域shp文件路径，浮岛shp文件路径
 
     Parameters
@@ -536,13 +537,18 @@ def gen_grids_array(grid, params, lake_path, island_path, show=False):
         栅格化矩阵
             0表示水域, 1表示陆地或障碍物
     """
-    if not os.path.exists(lake_path):
-        raise Exception('Lake shapefile not exist, Please create lake shapefile')
-    if not os.path.exists(island_path):
-        raise Exception('Island shapefile not exist')
-    lake_df = gp.read_file(lake_path)
-    island_df = gp.read_file(island_path)
-
+    if lake_path is not None:
+        if not os.path.exists(lake_path):
+            raise Exception('Lake shapefile not exist, Please create lake shapefile')
+        lake_df = gp.read_file(lake_path)
+    else:
+        lake_df = None
+    if island_path is not None:
+        if not os.path.exists(island_path):
+            raise Exception('Island shapefile not exist')
+        island_df = gp.read_file(island_path)
+    else:
+        island_df = None
     params = convert_params(params)
     rows_num = params['rows_num']
     columns_num = params['columns_num']
@@ -557,15 +563,108 @@ def gen_grids_array(grid, params, lake_path, island_path, show=False):
         row_array = []
         for c in range(columns_num):
             index = (rows_num - r - 1) * columns_num + c
-            if check_in_lake(lake_df, island_df, grid[index]):
-                row_array.append(0)
+            if lake_df is not None and island_df is not None:
+                if check_in_lake(lake_df, island_df, grid[index]):
+                    row_array.append(0)
+                else:
+                    row_array.append(1)
             else:
-                row_array.append(1)
+                row_array.append(0)
         grid_array.append(row_array)
-
     if show:
         print_grid_array(grid_array, rows_num, columns_num)
     return grid_array
+
+
+def grid_to_centre(gridid, params):
+    '''
+    栅格编号对应栅格中心点经纬度
+
+    输入数据的栅格编号与栅格参数，输出对应的栅格中心点
+    Parameters
+    -------
+    gridid : list
+        方形栅格:
+        [LONCOL,LATCOL] : list
+            栅格编号两列
+        三角形、六边形栅格:
+        [loncol_1,loncol_2,loncol_3] : list
+            栅格编号三列
+    params : list or dict
+        栅格参数
+    Returns
+    -------
+    HBLON : Series
+        栅格中心点经度列
+    HBLAT : Series
+        栅格中心点纬度列
+    '''
+    params = convert_params(params)
+    method = params['method']
+    if method == 'rect':
+        lngcol, latcol = gridid
+        lngcol = pd.Series(lngcol, name='lngcol')
+        latcol = pd.Series(latcol, name='latcol')
+        return grid_to_centre_rect(lngcol, latcol, params, from_origin=False)
+
+
+def grid_to_centre_rect(lng_col, lat_col, params, from_origin=False):
+    '''
+    The center location of the grid for rect grids. The input is the
+    grid ID and parameters, the output is the grid center location.
+    Parameters
+    -------
+    LONCOL : Series
+        The index of the grid longitude. The two columns LONCOL and
+        LATCOL together can specify a grid.
+    LATCOL : Series
+        The index of the grid latitude. The two columns LONCOL and
+        LATCOL together can specify a grid.
+    params : List
+        Gridding parameters (lng_start, lat_start, delta_lng, delta_lat) or
+        (lng_start, lat_start, delta_lng, delta_lat, theta).
+        lng_start and lat_start are the lower-left coordinates;
+        delta_lng, delta_lat are the length and width of a single grid;
+        theta is the angle of the grid, it will be 0 if not given.
+        When Gridding parameters is given, accuracy will not be used.
+    from_origin : bool
+        If True, lng_start and lat_start are the lower left of the first
+        grid.
+        If False, lng_start and lat_start are the center of the first
+        grid.
+    Returns
+    -------
+    HBLON : Series
+        The longitude of the grid center
+    HBLAT : Series
+        The latitude of the grid center
+    '''
+    params = convert_params(params)
+    lng_start = params['slng']
+    lat_start = params['slat']
+    delta_lng = params['delta_lng']
+    delta_lat = params['delta_lat']
+    theta = params['theta']
+
+    lng_col = pd.Series(lng_col)
+    lat_col = pd.Series(lat_col)
+    costheta = np.cos(theta * np.pi / 180)
+    sintheta = np.sin(theta * np.pi / 180)
+    R = np.array([[costheta * delta_lng, -sintheta * delta_lat],
+                  [sintheta * delta_lng, costheta * delta_lat]])
+    if from_origin:
+        hb_lng_hb_lat = np.dot(np.array([lng_col.values, lat_col.values]).T,
+                               R) + np.array([lng_start, lat_start]) - (
+                                R[0, :] / 2 + R[1, :] / 2)
+    else:
+        hb_lng_hb_lat = np.dot(np.array([lng_col.values, lat_col.values]).T,
+                               R) + np.array([lng_start, lat_start])
+    hb_lng = hb_lng_hb_lat[:, 0]
+    hb_lat = hb_lng_hb_lat[:, 1]
+    if len(hb_lng) == 1:
+        hb_lng = hb_lng[0]
+        hb_lat = hb_lat[0]
+    return hb_lng, hb_lat
 
 
 def print_grid_array(grid_array, rows_num, columns_num):
@@ -891,17 +990,17 @@ def gen_grid_to_baidu_polygon(grid=None, bounds=None, accuracy=10, processed=Tru
         grid的数据格式不正确
     """
     if grid is None and bounds is None:
-        raise Exception("Grid or bounds must have one of them!!!\n"+
+        raise Exception("Grid or bounds must have one of them!!!\n" +
                         "If grid is not None,convert directly\n",
                         "If bounds is not None, convert by area_to_grid first\n")
     if grid is None and bounds is not None:
         lng1, lat1, lng2, lat2 = bounds
         if not processed:
-            baidu_coords = convert_by_baidu([[lng1, lat1], [lng2,lat2]], f)
+            baidu_coords = convert_by_baidu([[lng1, lat1], [lng2, lat2]], f)
             lng1, lat1 = baidu_coords[0]
             lng2, lat2 = baidu_coords[1]
-        grid, params = area_to_grid([lng1, lat1,lng2,lat2], accuracy=accuracy)
-    
+        grid, params = area_to_grid([lng1, lat1, lng2, lat2], accuracy=accuracy)
+
     grid_list = []
     if type(grid) == gp.GeoDataFrame:
         grid = grid['geometry'].to_list()
@@ -915,22 +1014,22 @@ def gen_grid_to_baidu_polygon(grid=None, bounds=None, accuracy=10, processed=Tru
         lng1, lat1, lng2, lat2 = grid[i].bounds
         grid_list.append({
             'geometry': {
-            'type': "Polygon",
-            'coordinates': [
+                'type': "Polygon",
+                'coordinates': [
                     [
-                        [lng1 , lat1 ],
-                        [lng2 , lat1 ],
-                        [lng2 , lat2 ],
-                        [lng1 , lat2 ]
+                        [lng1, lat1],
+                        [lng2, lat1],
+                        [lng2, lat2],
+                        [lng1, lat2]
                     ]
                 ]
             }
         })
     return grid_list, params
 
+
 # TODO:这样的计算方法是有问题的
 def get_index_in_array(points, params):
-    
     result = []
     params = convert_params(params)
     s_lng = params['slng']

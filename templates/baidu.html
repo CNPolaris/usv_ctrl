@@ -256,6 +256,7 @@ drawingManager.addEventListener('overlaycomplete', function (e){
     areaBounds.push([bounds[3].lng, bounds[3].lat]);
     areaBounds.push([bounds[1].lng, bounds[1].lat]);
     sentBoundsToQt();
+    is_area = true;
 });
 //home point
 var tempHome = [];
@@ -275,6 +276,7 @@ var endPoint = undefined;
 var wayPoints = [];
 var tempWayPointIndex = 0;
 var areaBounds = [];
+var is_area = false; // 是否有研究区域
 function genCoordsLine(info, data) { //TODO 标注根据航向角转东
     let id = info.id;
     let _have = false;
@@ -359,29 +361,38 @@ function clearAllPath(){
 }
 
 function setStartPoint(){ // 设置起点 并回传qt
-    startPoint = new BMap.Point(tempHome[0], tempHome[1]);
-    py.set_start_point(tempHome[0] + ',' + tempHome[1], function (res){
-        if(res === 1){
-            var startIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png",new BMap.Size(52, 26)); // TODO:起点终点图标需要修改
-            var startMarker = new BMap.Marker(startPoint, {icon: startIcon});
-            map.addOverlay(startMarker);
-        } else {
-            alert("设置起点失败");
-        }
-    });
+    if(is_area === true){
+        startPoint = new BMap.Point(tempHome[0], tempHome[1]);
+        py.set_start_point(tempHome[0] + ',' + tempHome[1], function (res){
+            if(res === 1){
+                var startIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png",new BMap.Size(52, 26)); // TODO:起点终点图标需要修改
+                var startMarker = new BMap.Marker(startPoint, {icon: startIcon});
+                map.addOverlay(startMarker);
+            } else {
+                alert("设置起点失败");
+            }
+        });
+    } else {
+        alert('请先设置研究区域');
+    }
 }
 
 function setEndPoint() { // 设置终点 并回传qt
-    endPoint = new BMap.Point(tempHome[0], tempHome[1])
-    py.set_end_point(tempHome[0] + ',' + tempHome[1], function (res){
-        if(res === 1){
-            var endIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png",new BMap.Size(52, 26));
-            var endMarker = new BMap.Marker(endPoint, {icon: endIcon});
-            map.addOverlay(endMarker);
-        } else {
-            alert("设置终点失败");
-        }
-    });
+    if(is_area === true) {
+       endPoint = new BMap.Point(tempHome[0], tempHome[1])
+        py.set_end_point(tempHome[0] + ',' + tempHome[1], function (res){
+            if(res === 1){
+                var endIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png",new BMap.Size(52, 26));
+                var endMarker = new BMap.Marker(endPoint, {icon: endIcon});
+                map.addOverlay(endMarker);
+            } else {
+                alert("设置终点失败");
+            }
+        });
+    } else {
+        alert('请先设置研究区域');
+    }
+
 }
 
 function addNewShip(shipInfo){
@@ -442,8 +453,18 @@ function radiansToDegrees(radians){
 function sentWayPointToQt(index, point){
     py.recv_way_point(index +','+point.lng +','+point.lat);
 }
-
+// 向qt传递边界
 function sentBoundsToQt(){
     py.recv_bounds('baidu'+ ',' + areaBounds[0] + ',' + areaBounds[1]);
+}
+// 绘制路径规划路线
+function drawRoutePath(path) {
+    let path_points = [];
+    for(let i = 0; i<path.length; i++){
+        path_points.push(new BMap.Point(path[i].lng, path[i].lat));
+        const polylineRoute = new BMap.Polyline(path_points, {strokeColor:"red", strokeWeight:3, strokeOpacity:0.5});
+        polylineRoute.id = 'rrt';
+        map.addOverlay(polylineRoute);
+    }
 }
 </script>

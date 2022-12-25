@@ -28,6 +28,8 @@ from websocket import ABNF
 from hk import HKVideo
 from ui.ui_app import Ui_MainWindow
 from ship_info import ShipInfo
+from libs.grids import area_to_grid, gen_grids_array
+from route.demo import RRT
 
 showMessage = QMessageBox.question
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
@@ -50,6 +52,8 @@ class Window(QMainWindow):
     zoom_in_signal = QtCore.Signal(int)
     zoom_out_signal = QtCore.Signal(int)
     pan_auto_signal = QtCore.Signal(int)
+    # 主线程向路径规划线程传递数据
+    route_bounds = QtCore.Signal(list)
 
     def __init__(self):
         super().__init__()
@@ -69,11 +73,19 @@ class Window(QMainWindow):
         self.udp = UDP_Thread()
         self.hk = HKVideo()
         self.video = VideoWebThread()
+        self.route_thread = RouteThread()
+        """
+        GPS数据接收
+        """
         # 主线程向udp子线程传参
         self.udp_params.connect(self.udp.udp_params_update)
         self.clients.connect(self.udp.add_client)
+        # udp子线程向主线程传递
         self.udp.send_data.connect(self.log_list_view)
         self.udp.send_data.connect(self.send_coord_to_map)
+        """
+        视频监控线程
+        """
         # 主线程与监控线程通信
         self.hk.send_img_data.connect(self.recv_img)
         self.up_signal.connect(self.hk.move_top)
@@ -90,17 +102,32 @@ class Window(QMainWindow):
         # 主线程向视频推流线程传值
         self.img_data.connect(self.video.recv_img)
         """
+        路径规划线程
+        """
+        # 主线程向路径规划线程传值
+        self.route_bounds.connect(self.route_thread.gen_grid)
+        # route子线程向主线程传递
+        self.route_thread.send_route_path.connect(self.send_path_to_map)
+        # 路径规划线程
+        self.route_thread.start()
+        """
         参数
         """
         self.home = []
-        self.startPoint = []
-        self.endPoint = []
+        self.startPoint = []  # 起点
+        self.endPoint = []  # 终点
         self.com = QSerialPort()
         self.com_list = []
         self.current_client_type = 'UDP'
         self.ship_info = []  # 船的有关信息
         self.way_points = []  # 航点
         self.root_path = os.getcwd().replace("\\", "/")
+        # 地图栅格化数据
+        self.grid = None
+        self.params = None
+        self.grid_array = None
+        self.bounds = []
+        self.route = []
         """
         控件初始化
         """
@@ -334,7 +361,16 @@ class Window(QMainWindow):
         lat1 = float(lat1)
         lng2 = float(lng2)
         lat2 = float(lat2)
+        self.bounds = [lng1, lat1, lng2, lat2]
         print(f'研究区域为：{map}, {lng1},{lat1},{lng2},{lat2}')
+        self.route_bounds.emit(self.bounds)
+
+    def send_path_to_map(self, path):
+        temp = []
+        for i in range(len(path)):
+            temp.append({'lng': path[i][0], 'lat': path[i][1]})
+        print(temp)
+        self.page.runJavaScript(f'drawRoutePath({temp})')
 
     def on_map_types_comboBox_changed(self, i):
         """on_map_types_comboBox_changed 改变地图类型
@@ -620,6 +656,32 @@ class VideoWebThread(QtCore.QThread):
     def recv_img(self, data):
         self.ws.send(data, opcode=ABNF.OPCODE_BINARY)
 
+
+class RouteThread(QtCore.QThread):
+    send_route_path = QtCore.Signal(list)
+
+    def __init__(self):
+        super(RouteThread, self).__init__()
+        self.grid = None
+        self.params = None
+        self.grid_array = None
+
+    def run(self) -> None:
+        print("开启路径规划")
+
+    def gen_grid(self, bounds):
+        self.grid, self.params = area_to_grid(location=bounds)
+        self.grid_array = gen_grids_array(self.grid, self.params,
+                                          lake_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_lake.shp",
+                                          island_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_island.shp",
+                                          show=False)
+        print('生成矩阵完成')
+        obstacle_list = [(119.373225, 32.120244, 20), (119.372865, 32.118738, 10)]
+        rrt = RRT(start=[119.372874, 32.118417], goal=[119.373705, 32.12008], grid=self.grid,
+                  grid_array=self.grid_array,
+                  params=self.params, obstacle_coords=obstacle_list)
+        path = rrt.planning()
+        self.send_route_path.emit(path)
 
 def win():
     app = QApplication(sys.argv)

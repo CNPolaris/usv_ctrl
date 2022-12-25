@@ -316,6 +316,26 @@ class Window(QMainWindow):
             self.way_points[i] = [float(x), float(y)]
             print(f'修改航点{i}, {x}, {y}')
 
+    @Slot(str)
+    def recv_bounds(self, bounds):
+        """接收地图js回传的研究区域边界坐标 左下点和右上点
+
+        Parameters
+        ----------
+        bounds: str
+            区域坐标
+
+        Returns
+        -------
+
+        """
+        map, lng1, lat1, lng2, lat2 = bounds.split(',')
+        lng1 = float(lng1)
+        lat1 = float(lat1)
+        lng2 = float(lng2)
+        lat2 = float(lat2)
+        print(f'研究区域为：{map}, {lng1},{lat1},{lng2},{lat2}')
+
     def on_map_types_comboBox_changed(self, i):
         """on_map_types_comboBox_changed 改变地图类型
 

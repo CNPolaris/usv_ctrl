@@ -16,10 +16,81 @@
         margin: 0;
         font-family: "微软雅黑";
     }
+    dl,dt,dd,ul,li{
+		margin:0;
+		padding:0;
+		list-style:none;
+	}
+	p{font-size:12px;}
+	dt{
+		font-size:14px;
+		font-family:"微软雅黑";
+		font-weight:bold;
+		border-bottom:1px dotted #000;
+		padding:5px 0 5px 5px;
+		margin:5px 0;
+	}
+	dd{
+		padding:5px 0 0 5px;
+	}
+	li{
+		line-height:28px;
+	}
+    ul li {list-style: none;}
+        .info {
+            z-index: 999;
+            width: auto;
+            min-width: 22rem;
+            padding: .75rem 1.25rem;
+            margin-left: 1.25rem;
+            position: fixed;
+            top: 1rem;
+            background-color: #fff;
+            border-radius: .25rem;
+            font-size: 14px;
+            color: #666;
+            box-shadow: 0 2px 6px 0 rgba(27, 142, 236, 0.5);
+        }
+        .drawing-panel {
+            z-index: 999;
+            position: fixed;
+            bottom: 3.5rem;
+            margin-left: 2.5rem;
+            padding-left: 0;
+            border-radius: .25rem;
+            height: 47px;
+            box-shadow: 0 2px 6px 0 rgba(27, 142, 236, 0.5);
+        }
+        .bmap-btn {
+            border-right: 1px solid #d2d2d2;
+            float: left;
+            width: 64px;
+            height: 100%;
+            background-image: url(//api.map.baidu.com/library/DrawingManager/1.4/src/bg_drawing_tool.png);
+            cursor: pointer;
+        }
+        .drawing-panel .bmap-marker {
+            background-position: -65px 0;
+        }
+        .drawing-panel .bmap-polyline {
+            background-position: -195px 0;
+        }
+        .drawing-panel .bmap-rectangle {
+            background-position: -325px 0;
+        }
+        .drawing-panel .bmap-polygon {
+            background-position: -260px 0;
+        }
+        .drawing-panel .bmap-circle {
+            background-position: -130px 0;
+        }
     </style>
-    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=eEyGUmbcbPQKkLXfh9GUxNneQe9CS4wL"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=98edo3vSG3UhY6lLnN9vr3l3wZPDK1Cj"></script>
     <script type="text/javascript" src="https://mapv.baidu.com/build/mapv.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js"></script>
+    <link rel="stylesheet" href="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css" />
+
     <script>
     	//初始化代码，固定格式
         window.onload = function () {
@@ -30,7 +101,10 @@
     </script>
 </head>
 <body>
-    <div id="container"></div>
+<!--    <ul class = "drawing-panel">-->
+<!--        <li class="bmap-btn bmap-rectangle" id="rectangle" onclick="drawArea(this)"></li>-->
+<!--    </ul>-->
+    <div id="container"  style="height:100%;-webkit-transition: all 0.5s ease-in-out;transition: all 0.5s ease-in-out;"></div>
 </body>
 </html>
 <script type="text/javascript">
@@ -49,7 +123,7 @@ var scaleCtrl = new BMap.ScaleControl();  // 添加比例尺控件
 map.addControl(scaleCtrl);
 // 添加缩放控件
 map.addControl(new BMap.NavigationControl({type:BMAP_NAVIGATION_CONTROL_ZOOM}));
-//右键菜单
+/*右键菜单*/
 //右键触发时临时保存触发点的坐标
 map.addEventListener("rightclick", function (e) {
     tempHome = [e.point.lng, e.point.lat];
@@ -63,7 +137,7 @@ map.addEventListener('click', function(e){
     let wayPointsMarker = new BMap.Marker(e.point, {enableDragging: true});
     wayPointsMarker.id = wayPoints.length;
     wayPointsMarker.setTitle(e.point.lng + ',' + e.point.lat);
-    let label = new BMap.Label(wayPointsMarker.id + 1, {position:e.point}); 
+    let label = new BMap.Label(wayPointsMarker.id + 1, {position:e.point});
     wayPointsMarker.setLabel(label);
     // 拖拽航点时折线跟随变化
     wayPointsMarker.addEventListener('dragging', function(e){
@@ -105,6 +179,12 @@ var txtMenuItem = [
         callback: function (){
             setEndPoint();
         }
+    },
+    {
+        text: '设置研究区域',
+        callback: function (){
+            drawArea(this);
+        }
     }
 ]
 for(let i = 0; i < txtMenuItem.length; i++){
@@ -118,7 +198,65 @@ for(let i = 0; i < txtMenuItem.length; i++){
     ));
 }
 map.addContextMenu(menu);
+/*
+* 研究区域绘制相关
+* */
+var styleOptions = {
+    strokeColor: '#5E87DB',   // 边线颜色
+    fillColor: '#5E87DB',     // 填充颜色。当参数为空时，圆形没有填充颜色
+    strokeWeight: 2,          // 边线宽度，以像素为单位
+    strokeOpacity: 1,         // 边线透明度，取值范围0-1
+    fillOpacity: 0.2          // 填充透明度，取值范围0-1
+};
+var labelOptions = {
+    borderRadius: '2px',
+    background: '#FFFBCC',
+    border: '1px solid #E1E1E1',
+    color: '#703A04',
+    fontSize: '12px',
+    letterSpacing: '0',
+    padding: '5px'
+};
+// 实例化鼠标绘制工具
+var drawingType = BMAP_DRAWING_RECTANGLE;
+var drawingManager = new BMapLib.DrawingManager(map, {
+    enableCalculate: false, // 绘制是否进行测距测面
+    enableSorption: true,   // 是否开启边界吸附功能
+    sorptiondistance: 20,   // 边界吸附距离
+    circleOptions: styleOptions,     // 圆的样式
+    polylineOptions: styleOptions,   // 线的样式
+    polygonOptions: styleOptions,    // 多边形的样式
+    rectangleOptions: styleOptions,  // 矩形的样式
+    labelOptions: labelOptions,      // label样式
+});
 
+function drawArea(e) {
+    // 重新绘制前移除区域
+    let allOverlays = map.getOverlays();
+    for(let i=0;i<allOverlays.length;i++){
+        if(allOverlays[i].id === 'area'){
+            map.removeOverlay(allOverlays[i]);
+        }
+    }
+    // 进行绘制
+    if (drawingManager._isOpen && drawingManager.getDrawingMode() === drawingType) {
+        drawingManager.close();
+    } else {
+        drawingManager.setDrawingMode(drawingType);
+        drawingManager.open();
+    }
+}
+// 研究区域绘制完成监听事件
+drawingManager.addEventListener('overlaycomplete', function (e){
+    console.log("绘图完成");
+    drawingManager.close();
+    e.overlay.id = 'area';
+    console.log('区域图层', e.overlay.getPath());
+    let bounds = e.overlay.getPath();
+    areaBounds.push([bounds[3].lng, bounds[3].lat]);
+    areaBounds.push([bounds[1].lng, bounds[1].lat]);
+    sentBoundsToQt();
+});
 //home point
 var tempHome = [];
 var home = new BMap.Point(119.373175, 32.119817);
@@ -136,7 +274,7 @@ var startPoint = undefined;
 var endPoint = undefined;
 var wayPoints = [];
 var tempWayPointIndex = 0;
-
+var areaBounds = [];
 function genCoordsLine(info, data) { //TODO 标注根据航向角转东
     let id = info.id;
     let _have = false;
@@ -303,5 +441,9 @@ function radiansToDegrees(radians){
 
 function sentWayPointToQt(index, point){
     py.recv_way_point(index +','+point.lng +','+point.lat);
+}
+
+function sentBoundsToQt(){
+    py.recv_bounds('baidu'+ ',' + areaBounds[0] + ',' + areaBounds[1]);
 }
 </script>

@@ -160,6 +160,9 @@ class Window(QMainWindow):
         self.ui.connect_types_comboBox.addItems(self.client_connect_types)
         self.ui.connect_types_comboBox.currentIndexChanged[int].connect(self.on_client_connect_comboBox_changed)
         self.ui.client_serial_port.currentIndexChanged[int].connect(self.on_client_serial_port_changed)
+        """
+        云台控制相关
+        """
         # 初始化云台控制
         self.init_ctrl_btn()
         # 连接
@@ -180,6 +183,8 @@ class Window(QMainWindow):
         self.ui.webEngineView.load(QtCore.QUrl(path))
 
     def on_connect_btn_clicked(self):
+        """点击开始接收udp坐标数据传输
+        """
         print("开始接收数据")
         self.ui.connect_btn.setEnabled(False)
         self.ui.over_btn.setEnabled(True)
@@ -190,6 +195,8 @@ class Window(QMainWindow):
         self.udp.start()
 
     def on_over_btn_clicked(self):
+        """点击结束接收udp数据
+        """
         print("终止接收数据")
         self.ui.connect_btn.setEnabled(True)
         self.ui.over_btn.setEnabled(False)
@@ -201,6 +208,8 @@ class Window(QMainWindow):
         self.update_udp_params()
 
     def on_add_client_btn_clicked(self):
+        """点击添加新的终端接收
+        """
         print("添加新终端")
         if self.current_client_type == 'UDP':
             self.update_client()
@@ -330,6 +339,17 @@ class Window(QMainWindow):
 
     @Slot(str)
     def recv_way_point(self, point):
+        """接收地图js传递来的手动打点路径坐标
+
+        Parameters
+        ----------
+        point: str
+            坐标点 [idx, lng, lat]
+
+        Returns
+        -------
+        None
+        """
         i, x, y = point.split(',')
         i = int(i)
         if len(self.way_points) - 1 < i:
@@ -346,7 +366,7 @@ class Window(QMainWindow):
         Parameters
         ----------
         bounds: str
-            区域坐标
+            区域坐标: 'map,lng1,lat1,lng2,lat2',地图类型，左下角，右上角
 
         Returns
         -------
@@ -362,6 +382,17 @@ class Window(QMainWindow):
         self.route_bounds.emit(self.bounds)
 
     def send_path_to_map(self, path):
+        """传递路劲规划坐标到地图js
+
+        Parameters
+        ----------
+        path: list
+            路径坐标列表: [(lng, lat)]
+
+        Returns
+        -------
+        result: [{'lng': 0, 'lat': 0}]
+        """
         temp = []
         for i in range(len(path)):
             temp.append({'lng': path[i][0], 'lat': path[i][1]})
@@ -385,6 +416,7 @@ class Window(QMainWindow):
         self.ui.webEngineView.load(QtCore.QUrl(html_path))
 
     def on_client_connect_comboBox_changed(self, i):
+        """点击修改终端连接类型"""
         self.current_client_type = self.client_connect_types[i]
         if self.client_connect_types[i] == 'COM':
             self.com_list = QSerialPortInfo.availablePorts()
@@ -419,7 +451,7 @@ class Window(QMainWindow):
         pass
 
     def init_ctrl_btn(self):
-        # 云台控制
+        """初始化云台控制控件"""
         self.ui.top_btn.setAutoRepeat(True)
         self.ui.top_btn.setAutoRepeatDelay(400)
         self.ui.top_btn.setAutoRepeatInterval(100)
@@ -491,6 +523,7 @@ class Window(QMainWindow):
         self.ui.zoom_out_btn.released.connect(self.on_zoom_out_btn_released)
 
     def recv_img(self, array, w, h):
+        """接收监控线程传递的图像流"""
         show = cv2.resize(array, (960, 640))
         show = cv2.cvtColor(show, cv2.COLOR_BGR2RGB)
         show_image = QImage(show.data, show.shape[1], show.shape[0], QImage.Format_RGB888)
@@ -500,6 +533,7 @@ class Window(QMainWindow):
         self.ui.video.setPixmap(QPixmap.fromImage(show_image))
 
     def open_hk(self):
+        """开启监控"""
         if self.connect_flag:
             self.hk.start()
             self.ui.connect_btn_2.setText("已连接")

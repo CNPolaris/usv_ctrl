@@ -1,5 +1,12 @@
 # coding=utf-8
-
+"""
+-------------------------------------------------
+File Name: hk
+Description: 该模块是实现对海康监控的云台控制线程
+Author: TianXin
+Date：2022-12-26
+-------------------------------------------------
+"""
 import os
 import platform
 import PySide6
@@ -18,7 +25,7 @@ showMessage = QMessageBox.question
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
 
 
-class HKVideo(QtCore.QThread):
+class HKVideoThread(QtCore.QThread):
     send_img_data = QtCore.Signal(object, int, int)
 
     def __init__(self, ip='192.168.15.221', port=8000, username='admin', password='Just123!'):
@@ -48,11 +55,11 @@ class HKVideo(QtCore.QThread):
     def load_dll(self):
         # 加载库,先加载依赖库
         if self.windows_flag:
-            os.chdir(r'./sdk/win')
+            os.chdir(r'../sdk/win')
             self.Objdll = ctypes.CDLL(r'./HCNetSDK.dll')  # 加载网络库
             self.Playctrldll = ctypes.CDLL(r'./PlayCtrl.dll')  # 加载播放库
         else:
-            os.chdir(r'./sdk/linux')
+            os.chdir(r'../sdk/linux')
             self.Objdll = cdll.LoadLibrary(r'./libhcnetsdk.so')
             self.Playctrldll = cdll.LoadLibrary(r'./libPlayCtrl.so')
 
@@ -270,7 +277,7 @@ class HK_Window(QMainWindow):
         super(HK_Window, self).__init__()
         self.ui = ui_hk.Ui_MainWindow()
         self.ui.setupUi(self)
-        self.hk = HKVideo()
+        self.hk = HKVideoThread()
         # 主线程与监控线程通信
         self.hk.send_img_data.connect(self.recv_img)
         self.up_signal.connect(self.hk.move_top)
@@ -304,70 +311,70 @@ class HK_Window(QMainWindow):
         self.ui.top_btn.setAutoRepeat(True)
         self.ui.top_btn.setAutoRepeatDelay(400)
         self.ui.top_btn.setAutoRepeatInterval(100)
-        self.ui.top_btn.setIcon(QIcon("static/images/up.png"))
+        self.ui.top_btn.setIcon(QIcon("../static/images/up.png"))
         self.ui.top_btn.pressed.connect(self.on_move_top_btn_pressed)
         self.ui.top_btn.released.connect(self.on_move_top_btn_released)
 
         self.ui.bottom_btn.setAutoRepeat(True)
         self.ui.bottom_btn.setAutoRepeatDelay(400)
         self.ui.bottom_btn.setAutoRepeatInterval(100)
-        self.ui.bottom_btn.setIcon(QIcon("static/images/down.png"))
+        self.ui.bottom_btn.setIcon(QIcon("../static/images/down.png"))
         self.ui.bottom_btn.pressed.connect(self.on_move_down_btn_pressed)
         self.ui.bottom_btn.released.connect(self.on_move_down_btn_released)
 
         self.ui.left_btn.setAutoRepeat(True)
         self.ui.left_btn.setAutoRepeatDelay(400)
         self.ui.left_btn.setAutoRepeatInterval(100)
-        self.ui.left_btn.setIcon(QIcon("static/images/left.png"))
+        self.ui.left_btn.setIcon(QIcon("../static/images/left.png"))
         self.ui.left_btn.pressed.connect(self.on_left_btn_pressed)
         self.ui.left_btn.released.connect(self.on_left_btn_released)
 
         self.ui.right_btn.setAutoRepeat(True)
         self.ui.right_btn.setAutoRepeatDelay(400)
         self.ui.right_btn.setAutoRepeatInterval(100)
-        self.ui.right_btn.setIcon(QIcon("static/images/right.png"))
+        self.ui.right_btn.setIcon(QIcon("../static/images/right.png"))
         self.ui.right_btn.pressed.connect(self.on_right_btn_pressed)
         self.ui.right_btn.released.connect(self.on_right_btn_released)
 
         self.ui.up_left_btn.setAutoRepeat(True)
         self.ui.up_left_btn.setAutoRepeatDelay(400)
         self.ui.up_left_btn.setAutoRepeatInterval(100)
-        self.ui.up_left_btn.setIcon(QIcon("static/images/up_left.png"))
+        self.ui.up_left_btn.setIcon(QIcon("../static/images/up_left.png"))
         self.ui.up_left_btn.pressed.connect(self.on_up_left_btn_pressed)
         self.ui.up_left_btn.released.connect(self.on_up_left_btn_released)
 
         self.ui.up_right_btn.setAutoRepeat(True)
         self.ui.up_right_btn.setAutoRepeatDelay(400)
         self.ui.up_right_btn.setAutoRepeatInterval(100)
-        self.ui.up_right_btn.setIcon(QIcon("static/images/up_right.png"))
+        self.ui.up_right_btn.setIcon(QIcon("../static/images/up_right.png"))
         self.ui.up_right_btn.pressed.connect(self.on_up_right_btn_pressed)
         self.ui.up_right_btn.released.connect(self.on_up_right_btn_released)
 
         self.ui.down_left_btn.setAutoRepeat(True)
         self.ui.down_left_btn.setAutoRepeatDelay(400)
         self.ui.down_left_btn.setAutoRepeatInterval(100)
-        self.ui.down_left_btn.setIcon(QIcon("static/images/down_left.png"))
+        self.ui.down_left_btn.setIcon(QIcon("../static/images/down_left.png"))
         self.ui.down_left_btn.pressed.connect(self.on_down_left_btn_pressed)
         self.ui.down_left_btn.released.connect(self.on_down_left_btn_released)
 
         self.ui.down_right_btn.setAutoRepeat(True)
         self.ui.down_right_btn.setAutoRepeatDelay(400)
         self.ui.down_right_btn.setAutoRepeatInterval(100)
-        self.ui.down_right_btn.setIcon(QIcon("static/images/down_right.png"))
+        self.ui.down_right_btn.setIcon(QIcon("../static/images/down_right.png"))
         self.ui.down_right_btn.pressed.connect(self.on_down_right_btn_pressed)
         self.ui.down_right_btn.released.connect(self.on_down_right_btn_released)
 
         self.ui.zoom_in_btn.setAutoRepeat(True)
         self.ui.zoom_in_btn.setAutoRepeatDelay(400)
         self.ui.zoom_in_btn.setAutoRepeatInterval(100)
-        self.ui.zoom_in_btn.setIcon(QIcon("static/images/out.png"))
+        self.ui.zoom_in_btn.setIcon(QIcon("../static/images/out.png"))
         self.ui.zoom_in_btn.pressed.connect(self.on_zoom_in_btn_pressed)
         self.ui.zoom_in_btn.released.connect(self.on_zoom_in_btn_released)
 
         self.ui.zoom_out_btn.setAutoRepeat(True)
         self.ui.zoom_out_btn.setAutoRepeatDelay(400)
         self.ui.zoom_out_btn.setAutoRepeatInterval(100)
-        self.ui.zoom_out_btn.setIcon(QIcon("static/images/in.png"))
+        self.ui.zoom_out_btn.setIcon(QIcon("../static/images/in.png"))
         self.ui.zoom_out_btn.pressed.connect(self.on_zoom_out_btn_pressed)
         self.ui.zoom_out_btn.released.connect(self.on_zoom_out_btn_released)
 

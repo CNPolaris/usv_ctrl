@@ -6,30 +6,26 @@ Author: TianXin
 Date：2022-11-29
 -------------------------------------------------
 """
-import asyncio
 import ctypes
 import os
-import socket
 import sys
 
 import PySide6
 import cv2
-import websocket
 from PySide6 import QtCore
 from PySide6.QtGui import QIcon, QImage, QPixmap
 from PySide6.QtSerialPort import QSerialPort, QSerialPortInfo
-from PySide6.QtCore import QUrl, Slot, QObject, Signal, QModelIndex
+from PySide6.QtCore import Slot
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineSettings
-from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import *
-from websocket import ABNF
 
-from hk import HKVideo
+from core.route import RouteThread
+from core.udp_server import UDP_Thread
+from core.video_web import VideoWebThread
+from core.hk import HKVideoThread
 from ui.ui_app import Ui_MainWindow
 from ship_info import ShipInfo
-from libs.grids import area_to_grid, gen_grids_array
-from route.demo import RRT
 
 showMessage = QMessageBox.question
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
@@ -71,7 +67,7 @@ class Window(QMainWindow):
         self.pause = False
         # 数据接收主线程
         self.udp = UDP_Thread()
-        self.hk = HKVideo()
+        self.hk = HKVideoThread()
         self.video = VideoWebThread()
         self.route_thread = RouteThread()
         """
@@ -604,85 +600,6 @@ class Window(QMainWindow):
             self.upload_flag = False
 
 
-class UDP_Thread(QtCore.QThread):
-    send_data = QtCore.Signal(tuple, str)
-    recv_data = QtCore.Signal(tuple)
-
-    def __init__(self):
-        super().__init__()
-        self.ip, self.port, self.pause = None, None, None
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.client = []
-
-    def run(self) -> None:
-        try:
-            self.server.bind((self.ip, self.port))
-        except Exception as e:
-            print(e)
-            pass
-
-        while True:
-            data, client_addr = self.server.recvfrom(1024)
-            if client_addr in self.client:  # 判断发送数据的是否接收
-                # print(client_addr, '%s' % data.decode('utf-8'))
-                self.server.sendto(data.upper(), client_addr)
-                self.send_data.emit(client_addr, data.decode('utf-8'))
-                if self.pause:
-                    # self.s.close()
-                    break
-
-    def udp_params_update(self, udp_params_list):
-        # print(udp_params_list)
-        self.ip, self.port, self.pause = udp_params_list
-
-    def add_client(self, client_info):
-        if client_info not in self.client:
-            # print(client_info)
-            self.client.append(client_info)
-
-
-class VideoWebThread(QtCore.QThread):
-    def __init__(self):
-        super().__init__()
-        self.url = 'ws://127.0.0.1:8000/ship/video/1/'
-        self.data = "test upload"
-        self.ws = websocket.WebSocket()
-
-    def run(self) -> None:
-        print("VideoUpload")
-        self.ws.connect(self.url)
-
-    def recv_img(self, data):
-        self.ws.send(data, opcode=ABNF.OPCODE_BINARY)
-
-
-class RouteThread(QtCore.QThread):
-    send_route_path = QtCore.Signal(list)
-
-    def __init__(self):
-        super(RouteThread, self).__init__()
-        self.grid = None
-        self.params = None
-        self.grid_array = None
-
-    def run(self) -> None:
-        print("开启路径规划")
-
-    def gen_grid(self, bounds):
-        self.grid, self.params = area_to_grid(location=bounds)
-        self.grid_array = gen_grids_array(self.grid, self.params,
-                                          lake_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_lake.shp",
-                                          island_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_island.shp",
-                                          show=False)
-        print('生成矩阵完成')
-        obstacle_list = [(119.373225, 32.120244, 20), (119.372865, 32.118738, 10)]
-        rrt = RRT(start=[119.372874, 32.118417], goal=[119.373705, 32.12008], grid=self.grid,
-                  grid_array=self.grid_array,
-                  params=self.params, obstacle_coords=obstacle_list)
-        path = rrt.planning()
-        self.send_route_path.emit(path)
-
 def win():
     app = QApplication(sys.argv)
     channel = QWebChannel()
@@ -694,14 +611,6 @@ def win():
     w.ui.webEngineView.show()
     w.show()
 
-    # os.environ['QTWEBENGINE_REMOTE_DEBUGGING'] = '9966'
-    # dw = QWebEngineView()
-    # dw.setWindowTitle('开发人员工具')
-    # dw.load(QUrl('http://127.0.0.1:9966'))
-    # dw.move(600, 100)
-    # dw.show()
-
-    # w.page.load('file:///' + os.getcwd().replace('\\', '/') + "/templates/baidu.html")
     sys.exit(app.exec())
 
 

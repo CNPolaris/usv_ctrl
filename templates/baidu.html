@@ -476,4 +476,44 @@ function drawRoutePath(path) {
         map.addOverlay(polylineRoute);
     }
 }
+// 清除某个航点 并重新标记id
+function removeWayPoint(idx){
+    if (idx < 0 ){
+        alert('索引不正确');
+        return;
+    }
+    const allOverlays = map.getOverlays();
+    if(idx === 0) {
+        for(let i=0;i<allOverlays.length;i++){
+            if(allOverlays[i].toString() === '[object Marker]' && allOverlays[i].id === 0){
+                map.removeOverlay(allOverlays[i]);
+            }
+        }
+        wayPoints = [];
+        wayPointsPolyline.setPath(wayPoints);
+    } else {
+        let tempWay = [];
+        for(let i=0;i<idx;i++){
+            tempWay.push(wayPoints[i]);
+        }
+        for(let i=0;i<allOverlays.length;i++){
+            if(allOverlays[i].toString() === "[object Marker]" && allOverlays[i].id === idx){
+                map.removeOverlay(allOverlays[i]);
+            }
+        }
+        for(let i=idx+1;i<wayPoints.length;i++){
+            for(let j=0;j<allOverlays.length;j++){
+                if(allOverlays[j].toString() === "[object Marker]" && allOverlays[j].id === i){
+                    allOverlays[j].id = tempWay.length;
+                    allOverlays[j].setLabel(allOverlays[j].id+1);
+                    let label = new BMap.Label(allOverlays[j].id + 1, {position:wayPoints[i]});
+                    allOverlays[j].setLabel(label);
+                }
+            }
+            tempWay.push(wayPoints[i]);
+        }
+        wayPointsPolyline.setPath(tempWay);
+        wayPoints = tempWay;
+    }
+}
 </script>

@@ -287,7 +287,7 @@ function genCoordsLine(info, data) { //TODO 标注根据航向角转东
                 _have = true;
                 var pathArray = polylineArray[i].pathArray;
                 pathArray.push(new BMap.Point(data.lng, data.lat)); // 更新数据
-                
+
 
                 for (let j=0; j<allOverlay.length; j++){
                     //判断是否为polyline
@@ -317,7 +317,7 @@ function genCoordsLine(info, data) { //TODO 标注根据航向角转东
             polylineJson['pathArray'] = pathArray;
             polylineArray.push(polylineJson);
         }
-        
+
     } else {
         var pathArray = [];
         pathArray.push(new BMap.Point(data.lng, data.lat));
@@ -358,12 +358,24 @@ function clearAllPath(){
             }
         }
     }
+    // 清除手工航点路线和自动规划的路线
     let allOverlays = map.getOverlays();
     for(let i=0;i<allOverlays.length;i++){
         if(allOverlays[i].id === 'wayPoints' || allOverlays[i].id === 'route'){
             map.removeOverlay(allOverlays[i])
         }
     }
+    // 清除标记的航点
+    for(let i=0;i<allOverlays.length;i++){
+        for(let j=0;j<wayPoints.length;j++){
+            if(allOverlays[i].toString() === "[object Marker]" && allOverlays[i].id === j){
+                map.removeOverlay(allOverlays[i]);
+            }
+        }
+    }
+    wayPoints = [];
+    // 通知qt同步清除航点
+    py.clear_way_points();
 }
 
 function setStartPoint(){ // 设置起点 并回传qt
@@ -406,7 +418,7 @@ function addNewShip(shipInfo){
     if(isAdd === true){
         let myIcon = new BMap.Icon("https://s2.loli.net/2022/12/03/19lmJ3PhQiA8xVR.png",new BMap.Size(52, 26),{imageOffset: new BMap.Size(0, 0)});
         let point = new BMap.Point(119.373175, 32.119817);
-        let marker_s = new BMap.Marker(point, {icon: myIcon, enableMassClear: false}); 
+        let marker_s = new BMap.Marker(point, {icon: myIcon, enableMassClear: false});
         marker_s.setTitle(shipInfo.id)
         marker_s.id = shipInfo.id;       // 创建标注
         map.addOverlay(marker_s);

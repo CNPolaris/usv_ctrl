@@ -359,6 +359,13 @@ class Window(QMainWindow):
             self.way_points[i] = [float(x), float(y)]
             print(f'修改航点{i}, {x}, {y}')
 
+    @Slot()
+    def clear_way_points(self):
+        """地图js清除全部航点时同步清除qt的航点数据
+        """
+        self.way_points = []
+        print('清除航点', self.way_points)
+
     @Slot(str)
     def recv_bounds(self, bounds):
         """接收地图js回传的研究区域边界坐标 左下点和右上点

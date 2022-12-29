@@ -252,7 +252,7 @@ class RRT(object):
 
 if __name__ == '__main__':
     bounds = [119.37089330400458, 32.11659066559875, 119.37622923873386, 32.12275277282421]
-    grid, params = area_to_grid(location=bounds)
+    grid, params = area_to_grid(location=bounds, accuracy=5)
     grid_array = gen_grids_array(grid, params,
                                  lake_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_lake.shp",
                                  island_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_island.shp",

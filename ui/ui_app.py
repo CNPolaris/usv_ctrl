@@ -78,6 +78,14 @@ class Ui_MainWindow(object):
         self.groupBox_4.setMaximumSize(QSize(141, 181))
         self.verticalLayout_6 = QVBoxLayout(self.groupBox_4)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.accuracy_text = QTextEdit(self.groupBox_4)
+        self.accuracy_text.setObjectName(u"accuracy_text")
+        self.accuracy_text.setEnabled(True)
+        self.accuracy_text.setMinimumSize(QSize(0, 30))
+        self.accuracy_text.setMaximumSize(QSize(16777215, 30))
+
+        self.verticalLayout_6.addWidget(self.accuracy_text)
+
         self.back_home_btn = QPushButton(self.groupBox_4)
         self.back_home_btn.setObjectName(u"back_home_btn")
         self.back_home_btn.setMinimumSize(QSize(75, 24))

@@ -20,12 +20,13 @@ class RouteThread(QtCore.QThread):
         self.grid = None
         self.params = None
         self.grid_array = None
+        self.accuracy = 5
 
     def run(self) -> None:
         print("开启路径规划线程")
 
     def gen_grid(self, bounds):
-        self.grid, self.params = area_to_grid(location=bounds)
+        self.grid, self.params = area_to_grid(location=bounds, accuracy=self.accuracy)
         self.grid_array = gen_grids_array(self.grid, self.params,
                                           lake_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_lake.shp",
                                           island_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_island.shp",
@@ -40,3 +41,6 @@ class RouteThread(QtCore.QThread):
                   params=self.params, obstacle_coords=obstacle_list)
         path = rrt.planning()
         self.send_route_path.emit(path)
+
+    def set_accuracy(self, accuracy):
+        self.accuracy = accuracy

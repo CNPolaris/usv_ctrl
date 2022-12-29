@@ -52,6 +52,7 @@ class Window(QMainWindow):
     # 主线程向路径规划线程传递数据
     route_bounds = QtCore.Signal(list)
     start_end = QtCore.Signal(list)
+    route_accuracy = QtCore.Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -102,9 +103,12 @@ class Window(QMainWindow):
         """
         路径规划线程
         """
+        # 栅格精度
+        self.ui.accuracy_text.setText('5')
         # 主线程向路径规划线程传值
         self.route_bounds.connect(self.route_thread.gen_grid)
         self.start_end.connect(self.route_thread.set_start_end)
+        self.route_accuracy.connect(self.route_thread.set_accuracy)
         # route子线程向主线程传递
         self.route_thread.send_route_path.connect(self.send_path_to_map)
         # 路径规划线程
@@ -396,7 +400,10 @@ class Window(QMainWindow):
         if len(self.startPoint) == 0 or len(self.endPoint) == 0:
             msg = '请确定起点终点'
             self.page.runJavaScript(f'showMessage({msg})')
+        if int(self.ui.accuracy_text.toPlainText()) < 0:
+            QMessageBox.information(self, "error", "栅格精确度不能小于0")
         else:
+            self.route_accuracy.emit(int(self.ui.accuracy_text.toPlainText()))
             self.route_bounds.emit(self.bounds)
             self.start_end.emit([self.startPoint, self.endPoint])
 

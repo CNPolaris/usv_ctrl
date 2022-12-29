@@ -22,7 +22,7 @@ class RouteThread(QtCore.QThread):
         self.grid_array = None
 
     def run(self) -> None:
-        print("开启路径规划")
+        print("开启路径规划线程")
 
     def gen_grid(self, bounds):
         self.grid, self.params = area_to_grid(location=bounds)
@@ -30,9 +30,12 @@ class RouteThread(QtCore.QThread):
                                           lake_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_lake.shp",
                                           island_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_island.shp",
                                           show=False)
-        print('生成矩阵完成')
+        print('生成地图矩阵完成')
+
+    def set_start_end(self, start_end):
+        print(start_end)
         obstacle_list = [(119.373225, 32.120244, 20), (119.372865, 32.118738, 10)]
-        rrt = RRT(start=[119.372874, 32.118417], goal=[119.373705, 32.12008], grid=self.grid,
+        rrt = RRT(start=start_end[0], goal=start_end[1], grid=self.grid,
                   grid_array=self.grid_array,
                   params=self.params, obstacle_coords=obstacle_list)
         path = rrt.planning()

@@ -28,13 +28,13 @@ class Ui_MainWindow(object):
         MainWindow.resize(1401, 938)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.layoutWidget4 = QWidget(self.centralwidget)
-        self.layoutWidget4.setObjectName(u"layoutWidget4")
-        self.layoutWidget4.setGeometry(QRect(0, 10, 1392, 920))
-        self.verticalLayout_4 = QVBoxLayout(self.layoutWidget4)
+        self.layoutWidget = QWidget(self.centralwidget)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(0, 10, 1392, 920))
+        self.verticalLayout_4 = QVBoxLayout(self.layoutWidget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.layoutWidget4)
+        self.label = QLabel(self.layoutWidget)
         self.label.setObjectName(u"label")
         self.label.setMinimumSize(QSize(361, 31))
         font = QFont()
@@ -44,7 +44,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.label)
 
-        self.tabWidget = QTabWidget(self.layoutWidget4)
+        self.tabWidget = QTabWidget(self.layoutWidget)
         self.tabWidget.setObjectName(u"tabWidget")
         self.tabWidget.setMinimumSize(QSize(1381, 881))
         self.tab_1 = QWidget()
@@ -84,6 +84,11 @@ class Ui_MainWindow(object):
         self.back_home_btn.setMaximumSize(QSize(75, 24))
 
         self.verticalLayout_6.addWidget(self.back_home_btn)
+
+        self.route_btn = QPushButton(self.groupBox_4)
+        self.route_btn.setObjectName(u"route_btn")
+
+        self.verticalLayout_6.addWidget(self.route_btn)
 
 
         self.layout_info.addWidget(self.groupBox_4)
@@ -389,6 +394,7 @@ class Ui_MainWindow(object):
         self.groupBox_3.setTitle(QCoreApplication.translate("MainWindow", u"\u8bbe\u5907\u6811", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("MainWindow", u"\u8def\u5f84\u89c4\u5212", None))
         self.back_home_btn.setText(QCoreApplication.translate("MainWindow", u"\u81ea\u52a8\u8fd4\u822a", None))
+        self.route_btn.setText(QCoreApplication.translate("MainWindow", u"\u89c4\u5212\u8def\u7ebf", None))
         self.mapType_comboBox.setCurrentText("")
         self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"\u8fde\u63a5\u7ec8\u7aef", None))
         self.ip_label.setText(QCoreApplication.translate("MainWindow", u"IP", None))

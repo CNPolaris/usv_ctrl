@@ -50,6 +50,7 @@ class Window(QMainWindow):
     pan_auto_signal = QtCore.Signal(int)
     # 主线程向路径规划线程传递数据
     route_bounds = QtCore.Signal(list)
+    start_end = QtCore.Signal(list)
 
     def __init__(self):
         super().__init__()
@@ -102,6 +103,7 @@ class Window(QMainWindow):
         """
         # 主线程向路径规划线程传值
         self.route_bounds.connect(self.route_thread.gen_grid)
+        self.start_end.connect(self.route_thread.set_start_end)
         # route子线程向主线程传递
         self.route_thread.send_route_path.connect(self.send_path_to_map)
         # 路径规划线程
@@ -132,6 +134,7 @@ class Window(QMainWindow):
         self.ui.over_btn.clicked.connect(self.on_over_btn_clicked)
         self.ui.add_client_btn.clicked.connect(self.on_add_client_btn_clicked)
         self.ui.over_btn.setEnabled(False)
+        self.ui.route_btn.clicked.connect(self.on_route_btn_clicked)
         # client and server
         self.ui.baud_label.setVisible(False)
         self.ui.com_label.setVisible(False)
@@ -387,6 +390,14 @@ class Window(QMainWindow):
         self.bounds = [lng1, lat1, lng2, lat2]
         print(f'研究区域为：{map}, {lng1},{lat1},{lng2},{lat2}')
         self.route_bounds.emit(self.bounds)
+
+    def on_route_btn_clicked(self):
+        """开启路径规划btn绑定事件"""
+        if len(self.startPoint) == 0 or len(self.endPoint) == 0:
+            msg = '请确定起点终点'
+            self.page.runJavaScript(f'showMessage({msg})')
+        else:
+            self.start_end.emit([self.startPoint, self.endPoint])
 
     def send_path_to_map(self, path):
         """传递路劲规划坐标到地图js

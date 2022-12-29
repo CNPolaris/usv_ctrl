@@ -26,6 +26,7 @@ from core.video_web import VideoWebThread
 from core.hk import HKVideoThread
 from ui.ui_app import Ui_MainWindow
 from ship_info import ShipInfo
+from utils.logger import logger
 
 showMessage = QMessageBox.question
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
@@ -171,7 +172,7 @@ class Window(QMainWindow):
         # 连接
         self.connect_flag = True
         self.ui.pan_auto_btn.clicked.connect(self.on_pan_auto_btn_clicked)
-        self.open_hk()
+        # self.open_hk()
         self.ui.connect_btn_2.clicked.connect(self.open_hk)
         # 云端推流 TODO:效率太低 问题很大
         self.upload_flag = False
@@ -293,7 +294,7 @@ class Window(QMainWindow):
             home点坐标 lng,lat
         """
         x, y = home.split(',')
-        print(f'家{x},{y}')
+        logger.info(f'家:{x},{y}')
         self.home.append(float(x))
         self.home.append(float(y))
 
@@ -314,7 +315,7 @@ class Window(QMainWindow):
 
         """
         x, y = point.split(',')
-        print(f'起点{x},{y}')
+        logger.info(f'起点:{x},{y}')
         self.startPoint.append(float(x))
         self.startPoint.append(float(y))
         return 1
@@ -335,7 +336,7 @@ class Window(QMainWindow):
             0: set end point unsuccessful
         """
         x, y = point.split(',')
-        print(f'终点{x},{y}')
+        logger.info(f'终点:{x},{y}')
         self.endPoint.append(float(x))
         self.endPoint.append(float(y))
         return 1
@@ -356,18 +357,18 @@ class Window(QMainWindow):
         i, x, y = point.split(',')
         i = int(i)
         if len(self.way_points) - 1 < i:
-            print(f'添加航点{i}, {x}, {y}')
+            logger.info(f'添加航点:{i}, {x}, {y}')
             self.way_points.append([float(x), float(y)])
         else:
+            logger.info(f'修改航点: {self.way_points[i]} -> ({i}, {x}, {y})')
             self.way_points[i] = [float(x), float(y)]
-            print(f'修改航点{i}, {x}, {y}')
 
     @Slot()
     def clear_way_points(self):
         """地图js清除全部航点时同步清除qt的航点数据
         """
+        logger.info('清除航点', self.way_points)
         self.way_points = []
-        print('清除航点', self.way_points)
 
     @Slot(str)
     def recv_bounds(self, bounds):
@@ -388,8 +389,7 @@ class Window(QMainWindow):
         lng2 = float(lng2)
         lat2 = float(lat2)
         self.bounds = [lng1, lat1, lng2, lat2]
-        print(f'研究区域为：{map}, {lng1},{lat1},{lng2},{lat2}')
-        self.route_bounds.emit(self.bounds)
+        logger.info(f'研究区域为：{map}, {lng1},{lat1},{lng2},{lat2}')
 
     def on_route_btn_clicked(self):
         """开启路径规划btn绑定事件"""
@@ -397,6 +397,7 @@ class Window(QMainWindow):
             msg = '请确定起点终点'
             self.page.runJavaScript(f'showMessage({msg})')
         else:
+            self.route_bounds.emit(self.bounds)
             self.start_end.emit([self.startPoint, self.endPoint])
 
     def send_path_to_map(self, path):
@@ -414,7 +415,7 @@ class Window(QMainWindow):
         temp = []
         for i in range(len(path)):
             temp.append({'lng': path[i][0], 'lat': path[i][1]})
-        print(temp)
+        logger.info(f'最终路径: {temp}')
         self.page.runJavaScript(f'drawRoutePath({temp})')
 
     def on_map_types_comboBox_changed(self, i):

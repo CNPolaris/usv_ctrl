@@ -11,7 +11,7 @@ import math
 import matplotlib.pyplot as plt
 import random
 
-from libs.grids import *
+from libs.grids import area_to_grid, gen_grids_array, insert_obstacle_into_grids, gps_to_grid, grid_to_centre
 from utils.logger import logger
 
 
@@ -42,16 +42,9 @@ class RRT(object):
 
     def gen_grid(self) -> None:
         """数据预处理以及矩阵生成
-
-        Returns
-        -------
-
         """
         self.start = gps_to_grid(self.start[0], self.start[1], self.params)[::-1]
         self.goal = gps_to_grid(self.goal[0], self.goal[1], self.params)[::-1]
-        logger.info(f'起点位置: {self.start[0]}行, {self.start[1]}列')
-        logger.info(f'终点位置: {self.goal[0]}行, {self.goal[1]}列')
-        logger.info(self.params)
         self.start_node = Node(self.start[0], self.start[1])
         self.goal_node = Node(self.goal[0], self.goal[1])
         self.node_list.append(self.start_node)
@@ -60,6 +53,9 @@ class RRT(object):
         self.col_num = self.params["columns_num"]
 
         self.grid_array = insert_obstacle_into_grids(self.grids, self.grid_array, self.params, self.obstacle_coords)
+        logger.info(f'起点位置: {self.start[0]}行, {self.start[1]}列, {self.grid_array[self.start[0]][self.start[1]]}')
+        logger.info(f'终点位置: {self.goal[0]}行, {self.goal[1]}列, {self.grid_array[self.goal[0]][self.goal[1]]}')
+        logger.info(self.params)
 
     def get_sample_point(self):
         """研究区域内生成随机点
@@ -71,11 +67,13 @@ class RRT(object):
         """
         while True:
             # 横坐标
-            row = random.randint(min(self.start_node.row, self.goal_node.row + 1), max(self.start_node.row,
-                                                                                       self.goal_node.row + 1))
-            # 纵坐标
-            col = random.randint(min(self.start_node.col, self.goal_node.col + 1), max(self.start_node.col,
-                                                                                       self.goal_node.col + 1))
+            # row = random.randint(min(self.start_node.row, self.goal_node.row + 1), max(self.start_node.row,
+            #                                                                            self.goal_node.row + 1))
+            # # 纵坐标
+            # col = random.randint(min(self.start_node.col, self.goal_node.col + 1), max(self.start_node.col,
+            #                                                                            self.goal_node.col + 1))
+            row = random.randint(0, self.row_num - 1)
+            col = random.randint(0, self.col_num - 1)
             if self.grid_array[row][col] == 0:
                 break
         return [row, col]
@@ -252,9 +250,22 @@ class RRT(object):
         plt.show()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    bounds = [119.37089330400458, 32.11659066559875, 119.37622923873386, 32.12275277282421]
+    grid, params = area_to_grid(location=bounds)
+    grid_array = gen_grids_array(grid, params,
+                                 lake_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_lake.shp",
+                                 island_path="E:\\just\\海韵湖智能技术实验场\\data\\baidu_island.shp",
+                                 show=False)
+    print('生成地图矩阵完成')
     obstacle_list = [(119.373225, 32.120244, 20), (119.372865, 32.118738, 10)]
-    bounds = [119.37098775602607, 32.11655934651841, 119.37609501851392, 32.12293903313633]
-    rrt = RRT(start=[119.372874, 32.118417], goal=[119.373705, 32.12008], bounds=bounds, obstacle_coords=obstacle_list)
-    rrt.planning()
-    # rrt.draw_static([])
+    start = [119.37287499974904, 32.1184177460211]
+    goal = [119.37370547445714, 32.12008197895451]
+    # start=[119.37264499974904, 32.1176457460211]
+    # goal=[119.37292347445714, 32.12126197895451]
+    # start = [119.37333669499172, 32.121200817655264]
+    # goal = [119.37293245751223, 32.1181732816143]
+    rrt = RRT(start=start, goal=goal, grid=grid,
+              grid_array=grid_array,
+              params=params, obstacle_coords=obstacle_list)
+    path = rrt.planning()

@@ -261,7 +261,7 @@ drawingManager.addEventListener('overlaycomplete', function (e){
 //home point
 var tempHome = [];
 var home = new BMap.Point(119.373175, 32.119817);
-var homeIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png", new BMap.Size(23, 35));
+var homeIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png", new BMap.Size(25, 37));
 var homeMarker = new BMap.Marker(home, {icon: homeIcon, enableMassClear: false});
 homeMarker.setTitle('家');
 map.addOverlay(homeMarker);
@@ -382,7 +382,7 @@ function setStartPoint(){ // 设置起点 并回传qt
     startPoint = new BMap.Point(tempHome[0], tempHome[1]);
     py.set_start_point(tempHome[0] + ',' + tempHome[1], function (res){
         if(res === 1){
-            var startIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png",new BMap.Size(52, 26)); // TODO:起点终点图标需要修改
+            var startIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/QpesPc3VjhMzCkL.png",new BMap.Size(28, 43)); // TODO:起点终点图标需要修改
             var startMarker = new BMap.Marker(startPoint, {icon: startIcon});
             map.addOverlay(startMarker);
         } else {
@@ -395,7 +395,7 @@ function setEndPoint() { // 设置终点 并回传qt
    endPoint = new BMap.Point(tempHome[0], tempHome[1])
     py.set_end_point(tempHome[0] + ',' + tempHome[1], function (res){
         if(res === 1){
-            var endIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png",new BMap.Size(52, 26));
+            var endIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/GfvKrbPFTecYjq6.png",new BMap.Size(28, 43));
             var endMarker = new BMap.Marker(endPoint, {icon: endIcon});
             map.addOverlay(endMarker);
         } else {

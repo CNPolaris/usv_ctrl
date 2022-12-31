@@ -25,16 +25,14 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1401, 938)
+        MainWindow.resize(1401, 757)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.layoutWidget = QWidget(self.centralwidget)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(0, 10, 1392, 920))
-        self.verticalLayout_4 = QVBoxLayout(self.layoutWidget)
+        self.verticalLayout_3 = QVBoxLayout(self.centralwidget)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_4 = QVBoxLayout()
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.layoutWidget)
+        self.label = QLabel(self.centralwidget)
         self.label.setObjectName(u"label")
         self.label.setMinimumSize(QSize(361, 31))
         font = QFont()
@@ -44,18 +42,17 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.label)
 
-        self.tabWidget = QTabWidget(self.layoutWidget)
+        self.tabWidget = QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName(u"tabWidget")
-        self.tabWidget.setMinimumSize(QSize(1381, 881))
+        self.tabWidget.setEnabled(True)
+        self.tabWidget.setMinimumSize(QSize(1381, 700))
         self.tab_1 = QWidget()
         self.tab_1.setObjectName(u"tab_1")
-        self.layoutWidget1 = QWidget(self.tab_1)
-        self.layoutWidget1.setObjectName(u"layoutWidget1")
-        self.layoutWidget1.setGeometry(QRect(0, 0, 330, 183))
-        self.layout_info = QHBoxLayout(self.layoutWidget1)
+        self.horizontalLayout_3 = QHBoxLayout(self.tab_1)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.layout_info = QHBoxLayout()
         self.layout_info.setObjectName(u"layout_info")
-        self.layout_info.setContentsMargins(0, 0, 0, 0)
-        self.groupBox_3 = QGroupBox(self.layoutWidget1)
+        self.groupBox_3 = QGroupBox(self.tab_1)
         self.groupBox_3.setObjectName(u"groupBox_3")
         self.groupBox_3.setMinimumSize(QSize(181, 181))
         self.groupBox_3.setMaximumSize(QSize(181, 181))
@@ -72,7 +69,7 @@ class Ui_MainWindow(object):
 
         self.layout_info.addWidget(self.groupBox_3)
 
-        self.groupBox_4 = QGroupBox(self.layoutWidget1)
+        self.groupBox_4 = QGroupBox(self.tab_1)
         self.groupBox_4.setObjectName(u"groupBox_4")
         self.groupBox_4.setMinimumSize(QSize(141, 181))
         self.groupBox_4.setMaximumSize(QSize(141, 181))
@@ -101,35 +98,22 @@ class Ui_MainWindow(object):
 
         self.layout_info.addWidget(self.groupBox_4)
 
-        self.layoutWidget2 = QWidget(self.tab_1)
-        self.layoutWidget2.setObjectName(u"layoutWidget2")
-        self.layoutWidget2.setGeometry(QRect(331, 60, 1031, 779))
-        self.verticalLayout = QVBoxLayout(self.layoutWidget2)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.webEngineView = QWebEngineView(self.layoutWidget2)
-        self.webEngineView.setObjectName(u"webEngineView")
-        self.webEngineView.setMinimumSize(QSize(970, 550))
-        self.webEngineView.setMaximumSize(QSize(1029, 701))
-        self.webEngineView.setUrl(QUrl(u"about:blank"))
 
-        self.verticalLayout.addWidget(self.webEngineView)
+        self.horizontalLayout_3.addLayout(self.layout_info)
 
-        self.logList = QListView(self.layoutWidget2)
-        self.logList.setObjectName(u"logList")
-        self.logList.setMinimumSize(QSize(961, 70))
-        self.logList.setMaximumSize(QSize(1029, 70))
-
-        self.verticalLayout.addWidget(self.logList)
-
+        self.verticalLayout_7 = QVBoxLayout()
+        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.mapType_comboBox = QComboBox(self.tab_1)
         self.mapType_comboBox.setObjectName(u"mapType_comboBox")
-        self.mapType_comboBox.setGeometry(QRect(332, 16, 91, 22))
         self.mapType_comboBox.setMinimumSize(QSize(91, 22))
         self.mapType_comboBox.setMaximumSize(QSize(91, 22))
+
+        self.horizontalLayout.addWidget(self.mapType_comboBox)
+
         self.groupBox_2 = QGroupBox(self.tab_1)
         self.groupBox_2.setObjectName(u"groupBox_2")
-        self.groupBox_2.setGeometry(QRect(430, 0, 451, 51))
         self.groupBox_2.setMinimumSize(QSize(451, 51))
         self.ip_label = QLabel(self.groupBox_2)
         self.ip_label.setObjectName(u"ip_label")
@@ -196,18 +180,20 @@ class Ui_MainWindow(object):
         self.com_label.raise_()
         self.baud_label.raise_()
         self.add_client_btn.raise_()
+
+        self.horizontalLayout.addWidget(self.groupBox_2)
+
         self.groupBox = QGroupBox(self.tab_1)
         self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(QRect(900, 0, 441, 51))
         self.groupBox.setMinimumSize(QSize(441, 51))
         self.groupBox.setMaximumSize(QSize(441, 51))
-        self.layoutWidget3 = QWidget(self.groupBox)
-        self.layoutWidget3.setObjectName(u"layoutWidget3")
-        self.layoutWidget3.setGeometry(QRect(10, 15, 428, 33))
-        self.horizontalLayout_4 = QHBoxLayout(self.layoutWidget3)
+        self.layoutWidget = QWidget(self.groupBox)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(10, 15, 428, 33))
+        self.horizontalLayout_4 = QHBoxLayout(self.layoutWidget)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.label_2 = QLabel(self.layoutWidget3)
+        self.label_2 = QLabel(self.layoutWidget)
         self.label_2.setObjectName(u"label_2")
         self.label_2.setMinimumSize(QSize(21, 16))
         self.label_2.setMaximumSize(QSize(21, 16))
@@ -216,14 +202,14 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_4.addWidget(self.label_2)
 
-        self.ip_text = QTextEdit(self.layoutWidget3)
+        self.ip_text = QTextEdit(self.layoutWidget)
         self.ip_text.setObjectName(u"ip_text")
         self.ip_text.setMinimumSize(QSize(111, 31))
         self.ip_text.setMaximumSize(QSize(111, 31))
 
         self.horizontalLayout_4.addWidget(self.ip_text)
 
-        self.label_3 = QLabel(self.layoutWidget3)
+        self.label_3 = QLabel(self.layoutWidget)
         self.label_3.setObjectName(u"label_3")
         self.label_3.setMinimumSize(QSize(31, 16))
         self.label_3.setMaximumSize(QSize(31, 16))
@@ -232,26 +218,53 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_4.addWidget(self.label_3)
 
-        self.port_text = QTextEdit(self.layoutWidget3)
+        self.port_text = QTextEdit(self.layoutWidget)
         self.port_text.setObjectName(u"port_text")
         self.port_text.setMinimumSize(QSize(71, 31))
         self.port_text.setMaximumSize(QSize(71, 31))
 
         self.horizontalLayout_4.addWidget(self.port_text)
 
-        self.connect_btn = QPushButton(self.layoutWidget3)
+        self.connect_btn = QPushButton(self.layoutWidget)
         self.connect_btn.setObjectName(u"connect_btn")
         self.connect_btn.setMinimumSize(QSize(81, 31))
         self.connect_btn.setMaximumSize(QSize(81, 31))
 
         self.horizontalLayout_4.addWidget(self.connect_btn)
 
-        self.over_btn = QPushButton(self.layoutWidget3)
+        self.over_btn = QPushButton(self.layoutWidget)
         self.over_btn.setObjectName(u"over_btn")
         self.over_btn.setMinimumSize(QSize(81, 31))
         self.over_btn.setMaximumSize(QSize(81, 31))
 
         self.horizontalLayout_4.addWidget(self.over_btn)
+
+
+        self.horizontalLayout.addWidget(self.groupBox)
+
+
+        self.verticalLayout_7.addLayout(self.horizontalLayout)
+
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.webEngineView = QWebEngineView(self.tab_1)
+        self.webEngineView.setObjectName(u"webEngineView")
+        self.webEngineView.setMinimumSize(QSize(970, 530))
+        self.webEngineView.setUrl(QUrl(u"about:blank"))
+
+        self.verticalLayout.addWidget(self.webEngineView)
+
+        self.logList = QListView(self.tab_1)
+        self.logList.setObjectName(u"logList")
+        self.logList.setMinimumSize(QSize(961, 10))
+
+        self.verticalLayout.addWidget(self.logList)
+
+
+        self.verticalLayout_7.addLayout(self.verticalLayout)
+
+
+        self.horizontalLayout_3.addLayout(self.verticalLayout_7)
 
         self.tabWidget.addTab(self.tab_1, "")
         self.tab_2 = QWidget()
@@ -385,6 +398,9 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab_2, "")
 
         self.verticalLayout_4.addWidget(self.tabWidget)
+
+
+        self.verticalLayout_3.addLayout(self.verticalLayout_4)
 
         MainWindow.setCentralWidget(self.centralwidget)
 

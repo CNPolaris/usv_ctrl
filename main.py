@@ -345,6 +345,20 @@ class Window(QMainWindow):
         self.endPoint.append(float(y))
         return 1
 
+    @Slot(str, result=int)
+    def remove_start_end(self, t):
+        if t == '0' or t == 0:
+            logger.info(f"移除起点{self.startPoint}")
+            self.startPoint = []
+            return 1
+        elif t == '1' or t == 1:
+            logger.info(f"移除终点{self.endPoint}")
+            self.endPoint = []
+            return 1
+        else:
+            logger.info("移除起终点失败")
+            return 0
+
     @Slot(str)
     def recv_way_point(self, point):
         """接收地图js传递来的手动打点路径坐标
@@ -371,7 +385,7 @@ class Window(QMainWindow):
     def clear_way_points(self):
         """地图js清除全部航点时同步清除qt的航点数据
         """
-        logger.info('清除航点', self.way_points)
+        logger.info(f'清除航点{self.way_points}')
         self.way_points = []
 
     @Slot(str)

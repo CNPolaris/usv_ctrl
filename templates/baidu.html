@@ -362,7 +362,27 @@ function clearAllPath(){
     let allOverlays = map.getOverlays();
     for(let i=0;i<allOverlays.length;i++){
         if(allOverlays[i].id === 'wayPoints' || allOverlays[i].id === 'route'){
-            map.removeOverlay(allOverlays[i])
+            map.removeOverlay(allOverlays[i]);
+        }
+        // remove start and end point marker
+        if(allOverlays[i].id === "startPoint"){
+            // 通知qt同步清除start:0 end:1
+            py.remove_start_end('0', function (res){
+                if(res === 1){
+                   map.removeOverlay(allOverlays[i]);
+                } else {
+                    alert("移除起点失败");
+                }
+            });
+        }
+        if(allOverlays[i].id === "endPoint"){
+           py.remove_start_end('1', function (res){
+               if(res === 1){
+                   map.removeOverlay(allOverlays[i]);
+               } else {
+                   alert("移除终点失败");
+               }
+           });
         }
     }
     // 清除标记的航点
@@ -380,10 +400,18 @@ function clearAllPath(){
 
 function setStartPoint(){ // 设置起点 并回传qt
     startPoint = new BMap.Point(tempHome[0], tempHome[1]);
+    // 先检查清除
+    let allOverlays = map.getOverlays();
+    for(let i=0;i<allOverlays.length;i++){
+        if(allOverlays[i].id === "startPoint"){
+            map.removeOverlay(allOverlays[i]);
+        }
+    }
     py.set_start_point(tempHome[0] + ',' + tempHome[1], function (res){
         if(res === 1){
             var startIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/QpesPc3VjhMzCkL.png",new BMap.Size(28, 43)); // TODO:起点终点图标需要修改
             var startMarker = new BMap.Marker(startPoint, {icon: startIcon});
+            startMarker.id = "startPoint";
             map.addOverlay(startMarker);
         } else {
             alert("设置起点失败");
@@ -392,11 +420,18 @@ function setStartPoint(){ // 设置起点 并回传qt
 }
 
 function setEndPoint() { // 设置终点 并回传qt
-   endPoint = new BMap.Point(tempHome[0], tempHome[1])
+    let allOverlays = map.getOverlays();
+    for(let i=0;i<allOverlays.length;i++){
+        if(allOverlays[i].id === "endPoint"){
+            map.removeOverlay(allOverlays[i]);
+        }
+    }
+    endPoint = new BMap.Point(tempHome[0], tempHome[1])
     py.set_end_point(tempHome[0] + ',' + tempHome[1], function (res){
         if(res === 1){
             var endIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/GfvKrbPFTecYjq6.png",new BMap.Size(28, 43));
             var endMarker = new BMap.Marker(endPoint, {icon: endIcon});
+            endMarker.id = "endPoint";
             map.addOverlay(endMarker);
         } else {
             alert("设置终点失败");

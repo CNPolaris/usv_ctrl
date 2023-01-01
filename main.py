@@ -25,7 +25,7 @@ from core.udp_server import UDP_Thread
 from core.video_web import VideoWebThread
 from core.hk import HKVideoThread
 from ui.ui_app import Ui_MainWindow
-from ship_info import ShipInfo
+from mock.ship_info import ShipInfo
 from utils.logger import logger
 
 showMessage = QMessageBox.question

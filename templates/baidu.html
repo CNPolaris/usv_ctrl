@@ -638,7 +638,7 @@ function createObstacleCircle(id, origin, radius) {
             points.push(new BMap.Point(x, y));
         }
     }
-    const polylineRoute = new BMap.Polygon(points, {strokeColor:"red", strokeWeight:3, strokeOpacity:0.5});
+    const polylineRoute = new BMap.Polygon(points, {strokeColor:"red", strokeWeight:3, strokeOpacity:0.5, fillColor: 'red'});
     polylineRoute.id = 'obstacle' + id;
     map.addOverlay(polylineRoute);
 }

@@ -322,8 +322,7 @@ class Window(QMainWindow):
         """
         x, y = point.split(',')
         logger.info(f'起点:{x},{y}')
-        self.startPoint.append(float(x))
-        self.startPoint.append(float(y))
+        self.startPoint = [float(x), float(y)]
         return 1
 
     @Slot(str, result=int)
@@ -343,8 +342,7 @@ class Window(QMainWindow):
         """
         x, y = point.split(',')
         logger.info(f'终点:{x},{y}')
-        self.endPoint.append(float(x))
-        self.endPoint.append(float(y))
+        self.endPoint = [float(x), float(y)]
         return 1
 
     @Slot(str, result=int)

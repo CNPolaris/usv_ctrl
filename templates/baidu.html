@@ -556,4 +556,39 @@ function removeWayPoint(idx){
 function showMessage(msg) {
     alert(msg);
 }
+/*
+* 绘制障碍物
+* @param: origin 圆心 [lng, lat]
+* @param: radius 半径 米
+* */
+var obstacles = [[119.373225, 32.120244, 20], [119.372865, 32.118738, 10]];
+for(let i=0; i<2;i++){
+    createObstacleCircle(i, [obstacles[i][0], obstacles[i][1]], obstacles[i][2]);
+}
+function createObstacleCircle(id, origin, radius) {
+    // lng 经度；lat 纬度；dis 距离（千米）
+    let lng = origin[0];
+    let lat = origin[1];
+    let r = 6371;   //地球半径千米
+    let dis = radius / 1000;    //3千米距离
+    let dlng = 2*Math.asin(Math.sin(dis/(2*r))/Math.cos(lat*Math.PI/180));
+    dlng = dlng*180/Math.PI;      // 经度半径
+    let dlat = dis/r;
+    dlat = dlat*180/Math.PI;    // 纬度半径
+    // 圆形每一度 都算出一个经纬度
+    for(let sides = 1; sides <= 360; sides++) {
+        var angle = Math.PI * ((1/sides) - (1/2));
+        var rotatedAngle, x, y;
+        var points = [];
+        for(var i=0; i<sides; ++i) {
+            rotatedAngle = angle + (i * 2 * Math.PI / sides);
+            x = lng + (dlng * Math.cos(rotatedAngle));
+            y = lat + (dlat * Math.sin(rotatedAngle));
+            points.push(new BMap.Point(x, y));
+        }
+    }
+    const polylineRoute = new BMap.Polygon(points, {strokeColor:"red", strokeWeight:3, strokeOpacity:0.5});
+    polylineRoute.id = 'obstacle' + id;
+    map.addOverlay(polylineRoute);
+}
 </script>

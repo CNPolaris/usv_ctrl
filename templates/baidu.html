@@ -101,9 +101,6 @@
     </script>
 </head>
 <body>
-<!--    <ul class = "drawing-panel">-->
-<!--        <li class="bmap-btn bmap-rectangle" id="rectangle" onclick="drawArea(this)"></li>-->
-<!--    </ul>-->
     <div id="container"  style="height:100%;-webkit-transition: all 0.5s ease-in-out;transition: all 0.5s ease-in-out;"></div>
 </body>
 </html>
@@ -229,7 +226,10 @@ var drawingManager = new BMapLib.DrawingManager(map, {
     rectangleOptions: styleOptions,  // 矩形的样式
     labelOptions: labelOptions,      // label样式
 });
-
+/**
+ * 绘制研究区域，研究区域要在起点终点标记后进行
+ * @param e 地图事件
+*/
 function drawArea(e) {
     // 重新绘制前移除区域
     let allOverlays = map.getOverlays();
@@ -277,7 +277,12 @@ var wayPoints = [];
 var tempWayPointIndex = 0;
 var areaBounds = [];
 var is_area = false; // 是否有研究区域
-function genCoordsLine(info, data) { //TODO 标注根据航向角转东
+/**
+ * 无人船航行轨迹显示，允许多船显示
+ * @param {Object} info 无人船信息，用于表示不同USV
+ * @param {Object} data 轨迹坐标
+*/
+function genCoordsLine(info, data) {
     let id = info.id;
     let _have = false;
     var allOverlay = map.getOverlays(); //获取地图上的覆盖物
@@ -331,16 +336,20 @@ function genCoordsLine(info, data) { //TODO 标注根据航向角转东
     }
     moveShipMarker(id, data);
 }
-// TODO:home点需要继续细化
+/**
+ * Home点设置
+ * TODO:home点需要继续细化
+*/
 function setHomePoint(){
     home.lng = tempHome[0];
     home.lat = tempHome[1];
     homeMarker.setPosition(home);
     py.update_home_point(tempHome[0] + ',' +tempHome[1]);
 }
-/*
-清除全部航迹
-*/
+
+/**
+ * 清除全部航迹和一些标记
+ */
 function clearAllPath(){
     if(polylineArray.length !== 0){
         for(let i =0; i<polylineArray.length; i++){
@@ -398,6 +407,9 @@ function clearAllPath(){
     py.clear_way_points();
 }
 
+/**
+ * 设置路径规划起点，允许拖拽需改，并回传QT
+ */
 function setStartPoint(){ // 设置起点 并回传qt
     startPoint = new BMap.Point(tempHome[0], tempHome[1]);
     // 先检查清除
@@ -409,9 +421,13 @@ function setStartPoint(){ // 设置起点 并回传qt
     }
     py.set_start_point(tempHome[0] + ',' + tempHome[1], function (res){
         if(res === 1){
-            var startIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/QpesPc3VjhMzCkL.png",new BMap.Size(28, 43)); // TODO:起点终点图标需要修改
-            var startMarker = new BMap.Marker(startPoint, {icon: startIcon});
+            var startIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/QpesPc3VjhMzCkL.png",new BMap.Size(28, 43));
+            var startMarker = new BMap.Marker(startPoint, {icon: startIcon, enableDragging: true});
             startMarker.id = "startPoint";
+            // 拖拽事件
+            startMarker.addEventListener('dragging', function (e){
+               py.set_start_point(e.point.lng + ',' + e.point.lat);
+            });
             map.addOverlay(startMarker);
         } else {
             alert("设置起点失败");
@@ -419,6 +435,9 @@ function setStartPoint(){ // 设置起点 并回传qt
     });
 }
 
+/**
+ * 设置路径规划终点，允许标记拖拽，并实时回传QT
+ */
 function setEndPoint() { // 设置终点 并回传qt
     let allOverlays = map.getOverlays();
     for(let i=0;i<allOverlays.length;i++){
@@ -432,6 +451,10 @@ function setEndPoint() { // 设置终点 并回传qt
             var endIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/GfvKrbPFTecYjq6.png",new BMap.Size(28, 43));
             var endMarker = new BMap.Marker(endPoint, {icon: endIcon});
             endMarker.id = "endPoint";
+            // 拖拽事件
+            endMarker.addEventListener('dragging', function (e){
+               py.set_end_point(e.point.lng + ',' + e.point.lat);
+            });
             map.addOverlay(endMarker);
         } else {
             alert("设置终点失败");
@@ -439,6 +462,10 @@ function setEndPoint() { // 设置终点 并回传qt
     });
 }
 
+/**
+ * 添加新的船
+ * @param {Object} shipInfo 要添加船的信息
+ */
 function addNewShip(shipInfo){
     let allOverlay = map.getOverlays();
     let isAdd = true
@@ -459,8 +486,10 @@ function addNewShip(shipInfo){
         map.addOverlay(marker_s);
     }
 }
-/*
-移动船体标注
+/**
+ * 移动船体标注
+ * @param {Number} id 船的id
+ * @param {JSON} coord 要移动到的坐标点
 */
 function moveShipMarker(id, coord){
     var allOverlay = map.getOverlays();
@@ -475,8 +504,12 @@ function moveShipMarker(id, coord){
         }
     }
 }
-/*
-计算两个坐标点对于正北方向的朝向角度[0, 360]
+/**
+ * 计算两个坐标点对于正北方向的朝向角度[0, 360]
+ * @param {Number} x1 点1的lng
+ * @param {Number} y1 点1的lat
+ * @param {Number} x2 点2的lng
+ * @param {Number} y2 点2的lat
 */
 function calc_angle(x1, y1, x2, y2){
     let angle = 0;
@@ -486,22 +519,33 @@ function calc_angle(x1, y1, x2, y2){
     return radiansToDegrees(Math.atan2(a, b));
 }
 
-/*
-弧度转角度
+/**
+ * 弧度转角度
+ * @param {Number} radians  弧度角
+ * @returns {Number} degree 角度制
 */
 function radiansToDegrees(radians){
     const degrees = radians % (2 * Math.PI);
     return degrees * 180 / Math.PI;
 }
-
+/**
+ * 向QT传递航点信息
+ * @param {Number} index 索引位置
+ * @param {BMap.Point} point 百度地图原生point
+*/
 function sentWayPointToQt(index, point){
     py.recv_way_point(index +','+point.lng +','+point.lat);
 }
-// 向qt传递边界
+/**
+ * 向QT回传地图类型和研究区域边界点
+*/
 function sentBoundsToQt(){
     py.recv_bounds('baidu'+ ',' + areaBounds[0] + ',' + areaBounds[1]);
 }
-// 绘制路径规划路线
+/**
+ * 绘制路径规划给出的路径轨迹
+ * @param {Array} path [{lng: 119, lat: 32}]
+*/
 function drawRoutePath(path) {
     let path_points = [];
     for(let i = 0; i<path.length; i++){
@@ -511,7 +555,10 @@ function drawRoutePath(path) {
         map.addOverlay(polylineRoute);
     }
 }
-// 清除某个航点 并重新标记id
+/**
+ * 清除某个航点 并重新标记id
+ * @param {Number} idx 航点索引
+*/
 function removeWayPoint(idx){
     if (idx < 0 ){
         alert('索引不正确');
@@ -551,20 +598,24 @@ function removeWayPoint(idx){
         wayPoints = tempWay;
     }
 }
-/*
-* 消息*/
+/**
+ * 消息显示
+ * @param {string} msg 自定义消息
+*/
 function showMessage(msg) {
     alert(msg);
 }
-/*
-* 绘制障碍物
-* @param: origin 圆心 [lng, lat]
-* @param: radius 半径 米
-* */
+
 var obstacles = [[119.373225, 32.120244, 20], [119.372865, 32.118738, 10]];
 for(let i=0; i<2;i++){
     createObstacleCircle(i, [obstacles[i][0], obstacles[i][1]], obstacles[i][2]);
 }
+/**
+ * 绘制障碍物
+ * @param {Number} id 索引
+ * @param {Array} origin 圆心 [lng, lat]
+ * @param {Number} radius 半径 米
+*/
 function createObstacleCircle(id, origin, radius) {
     // lng 经度；lat 纬度；dis 距离（千米）
     let lng = origin[0];

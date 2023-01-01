@@ -17,9 +17,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QFrame,
-    QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-    QListView, QMainWindow, QPushButton, QSizePolicy,
-    QTabWidget, QTextEdit, QVBoxLayout, QWidget)
+    QGridLayout, QGroupBox, QHBoxLayout, QHeaderView,
+    QLabel, QListView, QMainWindow, QPushButton,
+    QSizePolicy, QTabWidget, QTableWidget, QTableWidgetItem,
+    QTextEdit, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -50,8 +51,8 @@ class Ui_MainWindow(object):
         self.tab_1.setObjectName(u"tab_1")
         self.horizontalLayout_3 = QHBoxLayout(self.tab_1)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.layout_info = QHBoxLayout()
-        self.layout_info.setObjectName(u"layout_info")
+        self.gridLayout_2 = QGridLayout()
+        self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.groupBox_3 = QGroupBox(self.tab_1)
         self.groupBox_3.setObjectName(u"groupBox_3")
         self.groupBox_3.setMinimumSize(QSize(181, 181))
@@ -67,7 +68,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_5.addWidget(self.client_listView)
 
 
-        self.layout_info.addWidget(self.groupBox_3)
+        self.gridLayout_2.addWidget(self.groupBox_3, 0, 0, 1, 1)
 
         self.groupBox_4 = QGroupBox(self.tab_1)
         self.groupBox_4.setObjectName(u"groupBox_4")
@@ -96,10 +97,24 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.addWidget(self.route_btn)
 
 
-        self.layout_info.addWidget(self.groupBox_4)
+        self.gridLayout_2.addWidget(self.groupBox_4, 0, 1, 1, 1)
+
+        self.groupBox_5 = QGroupBox(self.tab_1)
+        self.groupBox_5.setObjectName(u"groupBox_5")
+        self.groupBox_5.setMinimumSize(QSize(335, 465))
+        self.verticalLayout_8 = QVBoxLayout(self.groupBox_5)
+        self.verticalLayout_8.setObjectName(u"verticalLayout_8")
+        self.waypoints_table = QTableWidget(self.groupBox_5)
+        self.waypoints_table.setObjectName(u"waypoints_table")
+        self.waypoints_table.setMinimumSize(QSize(320, 430))
+
+        self.verticalLayout_8.addWidget(self.waypoints_table)
 
 
-        self.horizontalLayout_3.addLayout(self.layout_info)
+        self.gridLayout_2.addWidget(self.groupBox_5, 1, 0, 1, 2)
+
+
+        self.horizontalLayout_3.addLayout(self.gridLayout_2)
 
         self.verticalLayout_7 = QVBoxLayout()
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
@@ -419,6 +434,7 @@ class Ui_MainWindow(object):
         self.groupBox_4.setTitle(QCoreApplication.translate("MainWindow", u"\u8def\u5f84\u89c4\u5212", None))
         self.back_home_btn.setText(QCoreApplication.translate("MainWindow", u"\u81ea\u52a8\u8fd4\u822a", None))
         self.route_btn.setText(QCoreApplication.translate("MainWindow", u"\u89c4\u5212\u8def\u7ebf", None))
+        self.groupBox_5.setTitle(QCoreApplication.translate("MainWindow", u"WayPoints", None))
         self.mapType_comboBox.setCurrentText("")
         self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"\u8fde\u63a5\u7ec8\u7aef", None))
         self.ip_label.setText(QCoreApplication.translate("MainWindow", u"IP", None))

@@ -168,6 +168,8 @@ class Window(QMainWindow):
         self.ui.connect_types_comboBox.addItems(self.client_connect_types)
         self.ui.connect_types_comboBox.currentIndexChanged[int].connect(self.on_client_connect_comboBox_changed)
         self.ui.client_serial_port.currentIndexChanged[int].connect(self.on_client_serial_port_changed)
+        # waypoints table 初始化
+        self.init_way_points_table()
         """
         云台控制相关
         """
@@ -377,14 +379,32 @@ class Window(QMainWindow):
         if len(self.way_points) - 1 < i:
             logger.info(f'添加航点:{i}, {x}, {y}')
             self.way_points.append([float(x), float(y)])
+            row = self.ui.waypoints_table.rowCount()
+            self.ui.waypoints_table.setRowCount(row + 1)
+            self.ui.waypoints_table.setItem(row, 0, QTableWidgetItem(x))
+            self.ui.waypoints_table.setItem(row, 1, QTableWidgetItem(y))
         else:
             logger.info(f'修改航点: {self.way_points[i]} -> ({i}, {x}, {y})')
             self.way_points[i] = [float(x), float(y)]
+            self.ui.waypoints_table.setItem(i, 0, QTableWidgetItem(x))
+            self.ui.waypoints_table.setItem(i, 1, QTableWidgetItem(y))
+
+    def delete_way_point(self):
+        selected = self.ui.waypoints_table.selectedIndexes()
+        index = selected[0].row()
+        reply = showMessage(self, "航点", f"是否移除航点{self.way_points[index]}",
+                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            del self.way_points[index]
+            self.ui.waypoints_table.removeRow(index)
+            self.page.runJavaScript(f'removeWayPoint({index})')
 
     @Slot()
     def clear_way_points(self):
         """地图js清除全部航点时同步清除qt的航点数据
         """
+        while self.ui.waypoints_table.rowCount() != 0:
+            self.ui.waypoints_table.removeRow(0)
         logger.info(f'清除航点{self.way_points}')
         self.way_points = []
 
@@ -672,6 +692,17 @@ class Window(QMainWindow):
             self.ui.upload_img_btn.setText("开始推流")
             self.video.exit(retcode=1)
             self.upload_flag = False
+
+    def init_way_points_table(self):
+        """初始化航点列表
+        """
+        self.ui.waypoints_table.setColumnCount(2)
+        self.ui.waypoints_table.setHorizontalHeaderLabels(["经度", "纬度"])
+        self.ui.waypoints_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.ui.waypoints_table.horizontalHeader().resizeSection(0, 154)
+        self.ui.waypoints_table.horizontalHeader().resizeSection(1, 154)
+        # 双击删除选中的航点
+        self.ui.waypoints_table.doubleClicked.connect(self.delete_way_point)
 
 
 def win():

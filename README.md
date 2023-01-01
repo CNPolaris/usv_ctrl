@@ -1,4 +1,4 @@
-<div style="text-align: center">
+<div align="center">
   <img alt="USV Ctrl Logo" width="181" height="120" src="https://s2.loli.net/2023/01/01/QqlxOoVwS9gjrLy.jpg" />
   <h1>USV无人船控制系统</h1>
 </div>

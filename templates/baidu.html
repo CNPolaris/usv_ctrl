@@ -258,16 +258,10 @@ drawingManager.addEventListener('overlaycomplete', function (e){
     sentBoundsToQt();
     is_area = true;
 });
-//home point
-var tempHome = [];
-var home = new BMap.Point(119.373175, 32.119817);
-var homeIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png", new BMap.Size(25, 37));
-var homeMarker = new BMap.Marker(home, {icon: homeIcon, enableMassClear: false});
-homeMarker.setTitle('家');
-map.addOverlay(homeMarker);
 /*
 * 系统自定义内容
 * */
+var tempHome = [];  //临时保存当前鼠标下的坐标点
 var coords = [];
 var polylineArray = [];
 var polylineJson = {};
@@ -277,6 +271,10 @@ var wayPoints = [];
 var tempWayPointIndex = 0;
 var areaBounds = [];
 var is_area = false; // 是否有研究区域
+var is_home = false; // 是否有home点
+var home = new BMap.Point(119.373175, 32.119817);
+var homeIcon = new BMap.Icon("https://i.loli.net/2020/10/21/hQeUEjzTaZv63uB.png", new BMap.Size(25, 37));
+
 /**
  * 无人船航行轨迹显示，允许多船显示
  * @param {Object} info 无人船信息，用于表示不同USV
@@ -341,9 +339,24 @@ function genCoordsLine(info, data) {
  * TODO:home点需要继续细化
 */
 function setHomePoint(){
-    home.lng = tempHome[0];
-    home.lat = tempHome[1];
-    homeMarker.setPosition(home);
+    //home point
+    let allOverlays = map.getOverlays();
+    for(let i=0;i<allOverlays.length;i++){
+        if(allOverlays[i].id === 'home'){
+            home.lng = tempHome[0];
+            home.lat = tempHome[1];
+            allOverlays[i].setPosition(home);
+            is_home = true;
+        }
+    }
+    if(!is_home){
+        home.lng = tempHome[0];
+        home.lat = tempHome[1];
+        var homeMarker = new BMap.Marker(home, {icon: homeIcon, enableMassClear: false});
+        homeMarker.id = 'home';
+        homeMarker.setTitle('家');
+        map.addOverlay(homeMarker);
+    }
     py.update_home_point(tempHome[0] + ',' +tempHome[1]);
 }
 
@@ -367,10 +380,10 @@ function clearAllPath(){
             }
         }
     }
-    // 清除手工航点路线和自动规划的路线
+    // 清除手工航点路线和自动规划的路线、home
     let allOverlays = map.getOverlays();
     for(let i=0;i<allOverlays.length;i++){
-        if(allOverlays[i].id === 'wayPoints' || allOverlays[i].id === 'route'){
+        if(allOverlays[i].id === 'wayPoints' || allOverlays[i].id === 'route' || allOverlays[i].id === 'home'){
             map.removeOverlay(allOverlays[i]);
         }
         // remove start and end point marker
@@ -449,7 +462,7 @@ function setEndPoint() { // 设置终点 并回传qt
     py.set_end_point(tempHome[0] + ',' + tempHome[1], function (res){
         if(res === 1){
             var endIcon = new BMap.Icon("https://s2.loli.net/2022/12/31/GfvKrbPFTecYjq6.png",new BMap.Size(28, 43));
-            var endMarker = new BMap.Marker(endPoint, {icon: endIcon});
+            var endMarker = new BMap.Marker(endPoint, {icon: endIcon, enableDragging: true});
             endMarker.id = "endPoint";
             // 拖拽事件
             endMarker.addEventListener('dragging', function (e){

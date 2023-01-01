@@ -8,12 +8,13 @@ Date：2022-12-26
 """
 from PySide6 import QtCore
 
-from libs import area_to_grid, gen_grids_array
+from libs import area_to_grid, gen_grids_array, gps_to_grid
 from route.demo import RRT
 
 
 class RouteThread(QtCore.QThread):
     send_route_path = QtCore.Signal(list)
+    check_lake_signal = QtCore.Signal(bool)
 
     def __init__(self):
         super(RouteThread, self).__init__()
@@ -44,3 +45,21 @@ class RouteThread(QtCore.QThread):
 
     def set_accuracy(self, accuracy):
         self.accuracy = accuracy
+
+    def check_in_lake(self, point):
+        """检查起点或终点是否在水域中
+
+        Parameters
+        ----------
+        point: list
+            [lng, lat]: 坐标点
+
+        Returns
+        -------
+        flag: bool, True: 在水域中, False: 在陆地上
+        """
+        row, col = gps_to_grid(point[0], point[1], self.params)[::-1]
+        if self.grid_array[row][col] == 0:
+            self.check_lake_signal.emit(True)
+        else:
+            self.check_lake_signal.emit(False)

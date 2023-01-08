@@ -112,16 +112,22 @@
 * 但是浏览器会报安全性错误，无法直接使用本地的资源，所以把一些资源全部通过云端的方式进行引入，软件必须联网使用才可以
 *  目前通过修改百度地图的资源类型，使用传统js库，可以实现load方式的引入，要注意传统js和webgl的一些细节区别
 * */
+
+/**
+* 地图资源初始化以及原生控件添加
+*/
 var map = new BMap.Map('container'); // 创建Map实例
 map.centerAndZoom(new BMap.Point(119.373175, 32.119817), 18); // 初始化地图,设置中心点坐标和地图级别
 map.enableScrollWheelZoom(true); // 开启鼠标滚轮缩放
 map.setMapType(BMAP_SATELLITE_MAP);
 var scaleCtrl = new BMap.ScaleControl();  // 添加比例尺控件
 map.addControl(scaleCtrl);
-// 添加缩放控件
-map.addControl(new BMap.NavigationControl({type:BMAP_NAVIGATION_CONTROL_ZOOM}));
-/*右键菜单*/
-//右键触发时临时保存触发点的坐标
+map.addControl(new BMap.NavigationControl({type:BMAP_NAVIGATION_CONTROL_ZOOM})); // 添加缩放控件
+
+/**
+*右键菜单
+*/
+//右键点击时临时保存鼠标所在的点的坐标
 map.addEventListener("rightclick", function (e) {
     tempHome = [e.point.lng, e.point.lat];
 });
@@ -130,7 +136,19 @@ var wayPointsPolyline = new BMap.Polyline(wayPoints, {strokeColor:"blue", stroke
 wayPointsPolyline.id = 'wayPoints';
 map.addOverlay(wayPointsPolyline);
 map.addEventListener('click', function(e){
-
+    // 先判断航迹是否存在
+    let allOverlays = map.getOverlays();
+    let isWayPoints = false;
+    for(let i=0;i<allOverlays.length;i++){
+        if(allOverlays[i].id === 'wayPoints'){
+            isWayPoints = true;
+            break;
+        }
+    }
+    if(isWayPoints !== true){
+        map.addOverlay(wayPointsPolyline);
+    }
+    // 动态变化航点坐标
     let wayPointsMarker = new BMap.Marker(e.point, {enableDragging: true});
     wayPointsMarker.id = wayPoints.length;
     wayPointsMarker.setTitle(e.point.lng + ',' + e.point.lat);
@@ -150,7 +168,7 @@ map.addEventListener('click', function(e){
     // 回传
     sentWayPointToQt(wayPointsMarker.id, e.point);
 });
-
+// 菜单列表
 var menu = new BMap.ContextMenu();
 var txtMenuItem = [
     {
